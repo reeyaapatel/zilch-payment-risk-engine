@@ -18,6 +18,6 @@ public class PaymentRiskResponse {
     private String paymentId;
     private PaymentRiskRequest paymentDetails;
     private Integer riskScore;
-    private String status;
+    private Status status;
     private List<String> reasons;
 }

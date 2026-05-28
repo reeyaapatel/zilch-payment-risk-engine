@@ -1,6 +1,5 @@
 package com.reeya.payment_risk_engine.model;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -13,12 +12,12 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 @Entity
-@Table(name = "payment_risk_assessments")
+@Table(name = "PAYMENT_RISK_DECISION")
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PaymentRiskAssessment {
+public class PaymentRiskDecision {
     @Id
     private String paymentId;
     private BigDecimal amount;
@@ -28,7 +27,7 @@ public class PaymentRiskAssessment {
     private String buyerIp;
     private String buyerCountry;
     private Integer riskScore;
-    private String status;
+    private Status status;
     private String reasons;
     private Instant createdAt;
 }
