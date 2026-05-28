@@ -4,6 +4,7 @@ package com.reeya.payment_risk_engine.model;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 
 @Data
@@ -19,4 +20,5 @@ public class PaymentRiskResponse {
     private Integer riskScore;
     private Status status;
     private List<String> reasons;
+    private Instant createdAt;
 }

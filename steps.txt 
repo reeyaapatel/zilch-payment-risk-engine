@@ -13,3 +13,15 @@ mvn flyway:clean flyway:migrate -Pdev \
 
 
 
+curl -X POST http://localhost:8080/payments/risk \
+  -H "Content-Type: application/json" \
+  -d '{
+    "paymentId": "PAY123",
+    "amount": 100.00,
+    "currency": "GBP",
+    "country": "GB",
+    "merchantName": "ASOS",
+    "merchantCountry": "IRELAND"
+    "buyerIp": "1.0.0.1",
+    "buyerCountry": "UK"
+  }'

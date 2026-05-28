@@ -4,9 +4,11 @@ package com.reeya.payment_risk_engine.rules;
 import com.reeya.payment_risk_engine.model.PaymentRiskRequest;
 import com.reeya.payment_risk_engine.model.RiskLevel;
 import com.reeya.payment_risk_engine.model.RiskRuleResult;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 
+@Component
 public class HighAmountRule implements RiskRule {
 
     private static final String RULE_NAME = "HIGH_AMOUNT_RULE";
@@ -20,7 +22,7 @@ public class HighAmountRule implements RiskRule {
                     .ruleName(RULE_NAME)
                     .score(10)
                     .riskLevel(RiskLevel.HIGH)
-                    .description("Amount exceeds threshold of 1000")
+                    .reason("Amount exceeds threshold of 1000")
                     .build();
         }
 
@@ -30,7 +32,7 @@ public class HighAmountRule implements RiskRule {
                     .ruleName(RULE_NAME)
                     .score(5)
                     .riskLevel(RiskLevel.MEDIUM)
-                    .description("Amount exceeds threshold of 500")
+                    .reason("Amount exceeds threshold of 500")
                     .build();
         }
 
@@ -38,7 +40,7 @@ public class HighAmountRule implements RiskRule {
                 .ruleName(RULE_NAME)
                 .score(1)
                 .riskLevel(RiskLevel.LOW)
-                .description("Amount is within acceptable threshold")
+                .reason("Amount is within acceptable threshold")
                 .build();
     }
 }
