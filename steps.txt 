@@ -10,3 +10,6 @@ mvn flyway:info \
 mvn flyway:clean flyway:migrate -Pdev \
   -Dflyway.url=jdbc:h2:file:./data/riskdb \
   -Dflyway.user=sa
+
+
+
