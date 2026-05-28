@@ -1,0 +1,12 @@
+-- connected to h2, update url
+
+
+mvn flyway:info \
+  -Dflyway.url=jdbc:h2:file:./data/payment-risk \
+  -Dflyway.user=sa \
+  -Dflyway.password=
+
+
+mvn flyway:clean flyway:migrate -Pdev \
+  -Dflyway.url=jdbc:h2:file:./data/riskdb \
+  -Dflyway.user=sa
