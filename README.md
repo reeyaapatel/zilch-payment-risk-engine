@@ -19,6 +19,11 @@ mvn spring-boot:run
 ## Run Flyway Migrations in dev
 
 ```bash
+mvn flyway:info \
+  -Dflyway.url=jdbc:h2:file:./data/riskdb \
+  -Dflyway.user=sa \
+  -Dflyway.password=
+  
 mvn flyway:clean flyway:migrate \
   -Dflyway.cleanDisabled=false \
   -Dflyway.url=jdbc:h2:file:./data/payment-risk \
