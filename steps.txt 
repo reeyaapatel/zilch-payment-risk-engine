@@ -12,7 +12,6 @@ mvn flyway:clean flyway:migrate -Pdev \
   -Dflyway.user=sa
 
 
-
 curl -X POST http://localhost:8080/payments/risk \
   -H "Content-Type: application/json" \
   -d '{
@@ -21,7 +20,7 @@ curl -X POST http://localhost:8080/payments/risk \
     "currency": "GBP",
     "country": "GB",
     "merchantName": "ASOS",
-    "merchantCountry": "IRELAND"
+    "merchantCountry": "IRELAND",
     "buyerIp": "1.0.0.1",
     "buyerCountry": "UK"
   }'

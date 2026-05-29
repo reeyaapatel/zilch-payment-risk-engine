@@ -1,5 +1,6 @@
-package com.reeya.payment_risk_engine.model;
+package com.reeya.payment_risk_engine.model.persistence;
 
+import com.reeya.payment_risk_engine.model.Status;
 import com.reeya.payment_risk_engine.model.functions.StringListConverter;
 import jakarta.persistence.*;
 import lombok.*;
@@ -20,6 +21,11 @@ public class PaymentRisk {
     @Column(name = "payment_id", updatable = false)
     private String paymentId;
 
+    @Version
+    @Column(name = "version")
+    @Builder.Default
+    private Integer version = 1;
+
     @Column(name = "amount", updatable = false)
     private BigDecimal amount;
 
@@ -39,7 +45,7 @@ public class PaymentRisk {
     private Integer riskScore;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", updatable = false)
+    @Column(name = "status")
     private Status status;
 
     @Convert(converter = StringListConverter.class)
@@ -48,5 +54,7 @@ public class PaymentRisk {
 
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;
-}
 
+    @Column(name = "last_updated_at")
+    private Instant lastUpdatedAt;
+}

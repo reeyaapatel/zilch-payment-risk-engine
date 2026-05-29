@@ -3,8 +3,12 @@ package com.reeya.payment_risk_engine.service;
 
 
 import com.reeya.payment_risk_engine.model.*;
-import com.reeya.payment_risk_engine.repository.PaymentRiskRepository;
+import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
+import com.reeya.payment_risk_engine.model.api.PaymentRiskResponse;
+import com.reeya.payment_risk_engine.model.persistence.PaymentRisk;
 import com.reeya.payment_risk_engine.rules.RiskRule;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,7 +21,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -28,7 +31,7 @@ public class PaymentRiskServiceTest {
 
 
     @Mock
-    private PaymentRiskRepository paymentRiskRepository;
+    private EntityManager entityManager;
 
     @Mock
     private RiskRule riskRule1;
@@ -45,7 +48,7 @@ public class PaymentRiskServiceTest {
     @BeforeEach
     public void setUp() {
 
-        paymentRiskService = new PaymentRiskService(paymentRiskRepository, Arrays.asList(riskRule1, riskRule2));
+        paymentRiskService = new PaymentRiskService(entityManager, Arrays.asList(riskRule1, riskRule2));
         paymentRiskRequest = PaymentRiskRequest.builder()
                 .paymentId("PAY-001")
                 .amount(new BigDecimal(100))
@@ -61,7 +64,6 @@ public class PaymentRiskServiceTest {
         public void assessRisk_whenRiskScoreAboveHighRiskThreshold() {
             //GIVEN
             mockRules(1, 100, RiskLevel.HIGH);
-            mockRepositorySave();
 
             //WHEN
             PaymentRiskResponse response = paymentRiskService.assessRisk(paymentRiskRequest);
@@ -77,7 +79,6 @@ public class PaymentRiskServiceTest {
     public void assessRisk_whenRiskScoreIsEqualToHighThreshold() {
         //GIVEN
         mockRules(1, 69, RiskLevel.HIGH);
-        mockRepositorySave();
 
         //WHEN
         PaymentRiskResponse response = paymentRiskService.assessRisk(paymentRiskRequest);
@@ -93,7 +94,6 @@ public class PaymentRiskServiceTest {
     public void assessRisk_whenRiskScoreIsWithinMediumThreshold() {
         //GIVEN
         mockRules(1, 42, RiskLevel.HIGH);
-        mockRepositorySave();
 
         //WHEN
         PaymentRiskResponse response = paymentRiskService.assessRisk(paymentRiskRequest);
@@ -108,7 +108,6 @@ public class PaymentRiskServiceTest {
         public void assessRisk_whenRiskScoreIsEqualToMediumThreshold() {
             //GIVEN
             mockRules(1, 39, RiskLevel.HIGH);
-            mockRepositorySave();
 
             //WHEN
             PaymentRiskResponse response = paymentRiskService.assessRisk(paymentRiskRequest);
@@ -125,7 +124,6 @@ public class PaymentRiskServiceTest {
     public void assessRisk_whenRiskScoreIsWithinLowThreshold() {
         //GIVEN
         mockRules(1, 10, RiskLevel.LOW);
-        mockRepositorySave();
 
         //WHEN
         PaymentRiskResponse response = paymentRiskService.assessRisk(paymentRiskRequest);
@@ -141,9 +139,8 @@ public class PaymentRiskServiceTest {
     public void assessRisk_whenPaymentRiskIsAlreadyCached() {
         //GIVEN
         mockRules(1, 100, RiskLevel.HIGH);
-        mockRepositorySave();
         PaymentRiskResponse firstResponse = paymentRiskService.assessRisk(paymentRiskRequest);
-        Mockito.clearInvocations(paymentRiskRepository, riskRule1, riskRule2);
+        Mockito.clearInvocations(entityManager, riskRule1, riskRule2);
 
         //WHEN
         PaymentRiskResponse cachedResponse = paymentRiskService.assessRisk(paymentRiskRequest);
@@ -151,16 +148,15 @@ public class PaymentRiskServiceTest {
         //THEN
         assertSame(firstResponse, cachedResponse);
         assertResponse(cachedResponse, 101, Status.DECLINED);
-        Mockito.verifyNoInteractions(paymentRiskRepository, riskRule1, riskRule2);
+        Mockito.verifyNoInteractions(entityManager, riskRule1, riskRule2);
     }
 
     @Test
     public void getPayment_whenPaymentRiskIsAlreadyCached() {
         //GIVEN
         mockRules(1, 100, RiskLevel.HIGH);
-        mockRepositorySave();
         PaymentRiskResponse cachedAssessment = paymentRiskService.assessRisk(paymentRiskRequest);
-        Mockito.clearInvocations(paymentRiskRepository, riskRule1, riskRule2);
+        Mockito.clearInvocations(entityManager, riskRule1, riskRule2);
 
         //WHEN
         PaymentRiskResponse response = paymentRiskService.getPayment("PAY-001");
@@ -168,23 +164,45 @@ public class PaymentRiskServiceTest {
         //THEN
         assertSame(cachedAssessment, response);
         assertResponse(response, 101, Status.DECLINED);
-        Mockito.verifyNoInteractions(paymentRiskRepository, riskRule1, riskRule2);
+        Mockito.verifyNoInteractions(entityManager, riskRule1, riskRule2);
     }
 
     @Test
     public void getPayment_whenPaymentRiskIsFetchedFromDatabase() {
         //GIVEN
         PaymentRisk storedPayment = paymentRisk(40, Status.REQUIRES_REVIEW);
-        Mockito.when(paymentRiskRepository.findById("PAY-001")).thenReturn(Optional.of(storedPayment));
+        Mockito.when(entityManager.find(PaymentRisk.class, "PAY-001")).thenReturn(storedPayment);
 
         //WHEN
         PaymentRiskResponse response = paymentRiskService.getPayment("PAY-001");
 
         //THEN
         assertStoredPaymentResponse(response, 40, Status.REQUIRES_REVIEW);
-        Mockito.verify(paymentRiskRepository).findById("PAY-001");
+        Mockito.verify(entityManager).find(PaymentRisk.class, "PAY-001");
         Mockito.verifyNoInteractions(riskRule1, riskRule2);
-        Mockito.verifyNoMoreInteractions(paymentRiskRepository);
+        Mockito.verifyNoMoreInteractions(entityManager);
+    }
+
+    @Test
+    public void assessRisk_whenPersistFlushFailsFetchesExistingPayment() {
+        //GIVEN
+        mockRules(1, 39, RiskLevel.HIGH);
+        PaymentRisk storedPayment = paymentRisk(40, Status.REQUIRES_REVIEW);
+        Mockito.doThrow(new PersistenceException("Duplicate payment"))
+                .when(entityManager)
+                .flush();
+        Mockito.when(entityManager.find(PaymentRisk.class, "PAY-001")).thenReturn(storedPayment);
+
+        //WHEN
+        PaymentRiskResponse response = paymentRiskService.assessRisk(paymentRiskRequest);
+
+        //THEN
+        PaymentRisk savedPayment = verifySavedPayment();
+        assertSavedPayment(savedPayment, 40, Status.REQUIRES_REVIEW);
+        assertStoredPaymentResponse(response, 40, Status.REQUIRES_REVIEW);
+        Mockito.verify(entityManager).flush();
+        Mockito.verify(entityManager).find(PaymentRisk.class, "PAY-001");
+        verifyRuleCalls();
     }
 
     private void mockRules(int firstScore, int secondScore, RiskLevel secondRiskLevel) {
@@ -194,25 +212,23 @@ public class PaymentRiskServiceTest {
                 .thenReturn(ruleResult("IP_CHECK", secondScore, secondRiskLevel, "IP mismatch"));
     }
 
-    private void mockRepositorySave() {
-        Mockito.when(paymentRiskRepository.save(Mockito.any(PaymentRisk.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-    }
 
     private PaymentRisk verifySavedPayment() {
         ArgumentCaptor<PaymentRisk> captor = ArgumentCaptor.forClass(PaymentRisk.class);
-        Mockito.verify(paymentRiskRepository).save(captor.capture());
+        Mockito.verify(entityManager).persist(captor.capture());
         return captor.getValue();
     }
 
     private void verifyRuleCalls() {
         Mockito.verify(riskRule1).evaluate(paymentRiskRequest);
         Mockito.verify(riskRule2).evaluate(paymentRiskRequest);
-        Mockito.verifyNoMoreInteractions(paymentRiskRepository, riskRule1, riskRule2);
+        Mockito.verify(entityManager).flush();
+        Mockito.verifyNoMoreInteractions(entityManager, riskRule1, riskRule2);
     }
 
     private void assertSavedPayment(PaymentRisk savedPayment, int expectedRiskScore, Status expectedStatus) {
         assertEquals("PAY-001", savedPayment.getPaymentId());
+        assertEquals(1, savedPayment.getVersion());
         assertEquals(BigDecimal.valueOf(100), savedPayment.getAmount());
         assertEquals("GBP", savedPayment.getCurrency());
         assertEquals("MARKS&SPENCER", savedPayment.getMerchantName());
@@ -222,23 +238,28 @@ public class PaymentRiskServiceTest {
         assertEquals(expectedStatus, savedPayment.getStatus());
         assertEquals(expectedReasons, savedPayment.getReasons());
         assertNotNull(savedPayment.getCreatedAt());
+        assertNotNull(savedPayment.getLastUpdatedAt());
     }
 
     private void assertResponse(PaymentRiskResponse response, int expectedRiskScore, Status expectedStatus) {
         assertEquals("PAY-001", response.getPaymentId());
+        assertEquals(1, response.getVersion());
         assertSame(paymentRiskRequest, response.getPaymentDetails());
         assertEquals(expectedRiskScore, response.getRiskScore());
         assertEquals(expectedStatus, response.getStatus());
         assertEquals(expectedReasons, response.getReasons());
         assertNotNull(response.getCreatedAt());
+        assertNotNull(response.getLastUpdatedAt());
     }
 
     private void assertStoredPaymentResponse(PaymentRiskResponse response, int expectedRiskScore, Status expectedStatus) {
         assertEquals("PAY-001", response.getPaymentId());
+        assertEquals(1, response.getVersion());
         assertEquals(expectedRiskScore, response.getRiskScore());
         assertEquals(expectedStatus, response.getStatus());
         assertEquals(expectedReasons, response.getReasons());
         assertEquals(Instant.parse("2026-05-29T10:15:30Z"), response.getCreatedAt());
+        assertEquals(Instant.parse("2026-05-29T10:15:30Z"), response.getLastUpdatedAt());
 
         PaymentRiskRequest paymentDetails = response.getPaymentDetails();
         assertEquals("PAY-001", paymentDetails.getPaymentId());
@@ -252,6 +273,7 @@ public class PaymentRiskServiceTest {
     private PaymentRisk paymentRisk(int riskScore, Status status) {
         return PaymentRisk.builder()
                 .paymentId("PAY-001")
+                .version(1)
                 .amount(BigDecimal.valueOf(100))
                 .currency("GBP")
                 .merchantName("MARKS&SPENCER")
@@ -261,6 +283,7 @@ public class PaymentRiskServiceTest {
                 .status(status)
                 .reasons(expectedReasons)
                 .createdAt(Instant.parse("2026-05-29T10:15:30Z"))
+                .lastUpdatedAt(Instant.parse("2026-05-29T10:15:30Z"))
                 .build();
     }
 

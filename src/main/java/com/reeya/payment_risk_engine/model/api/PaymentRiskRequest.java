@@ -1,4 +1,4 @@
-package com.reeya.payment_risk_engine.model;
+package com.reeya.payment_risk_engine.model.api;
 import lombok.*;
 
 import java.math.BigDecimal;

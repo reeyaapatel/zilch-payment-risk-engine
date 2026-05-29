@@ -1,8 +1,8 @@
 package com.reeya.payment_risk_engine.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.reeya.payment_risk_engine.model.PaymentRiskRequest;
-import com.reeya.payment_risk_engine.model.PaymentRiskResponse;
+import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
+import com.reeya.payment_risk_engine.model.api.PaymentRiskResponse;
 import com.reeya.payment_risk_engine.model.Status;
 import com.reeya.payment_risk_engine.service.PaymentRiskService;
 import org.junit.jupiter.api.Test;

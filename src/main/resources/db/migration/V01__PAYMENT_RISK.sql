@@ -1,6 +1,7 @@
 CREATE TABLE PAYMENT_RISK
 (
     payment_id       VARCHAR(30) NOT NULL,
+    version          INT NOT NULL,
     amount           DECIMAL NOT NULL,
     currency         VARCHAR(3) NOT NULL,
     merchant_name    VARCHAR(300) NOT NULL,
@@ -10,5 +11,6 @@ CREATE TABLE PAYMENT_RISK
     status           VARCHAR(10) NOT NULL,
     reasons          VARCHAR(400),
     created_at       TIMESTAMP NOT NULL,
+    last_updated_at   TIMESTAMP NOT NULL,
     CONSTRAINT pk_payment_risk PRIMARY KEY (payment_id)
 );

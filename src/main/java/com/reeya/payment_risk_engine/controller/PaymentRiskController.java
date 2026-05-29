@@ -1,6 +1,6 @@
 package com.reeya.payment_risk_engine.controller;
-import com.reeya.payment_risk_engine.model.PaymentRiskRequest;
-import com.reeya.payment_risk_engine.model.PaymentRiskResponse;
+import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
+import com.reeya.payment_risk_engine.model.api.PaymentRiskResponse;
 import com.reeya.payment_risk_engine.service.PaymentRiskService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

@@ -53,10 +53,10 @@ mvn flyway:info \
   -Dflyway.user=sa \
   -Dflyway.password=
   
-mvn flyway:clean flyway:migrate \
-  -Dflyway.cleanDisabled=false \
-  -Dflyway.url=jdbc:h2:file:./data/payment-risk \
-  -Dflyway.user=sa
+  ./mvnw flyway:migrate \
+  -Dflyway.url=jdbc:h2:file:./data/riskdb \
+  -Dflyway.user=sa \
+  -Dflyway.password=
 ```
 
 ## H2 Console

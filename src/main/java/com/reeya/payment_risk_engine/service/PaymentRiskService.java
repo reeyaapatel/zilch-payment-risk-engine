@@ -1,8 +1,15 @@
 package com.reeya.payment_risk_engine.service;
 
 import com.reeya.payment_risk_engine.model.*;
+import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
+import com.reeya.payment_risk_engine.model.api.PaymentRiskResponse;
+import com.reeya.payment_risk_engine.model.persistence.PaymentRisk;
 import com.reeya.payment_risk_engine.repository.PaymentRiskRepository;
 import com.reeya.payment_risk_engine.rules.RiskRule;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.PersistenceException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,10 +22,15 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class PaymentRiskService {
 
-    private final PaymentRiskRepository repository;
+//    private final PaymentRiskRepository repository;
+    @PersistenceContext
+    private final EntityManager entityManager;
+
     private final List<RiskRule> riskRules;
+
     private final Map<String, PaymentRiskResponse> paymentRiskCache = new ConcurrentHashMap<>();
 
+    @Transactional
     public PaymentRiskResponse assessRisk(PaymentRiskRequest request) {
         PaymentRiskResponse cachedResponse = paymentRiskCache.get(request.getPaymentId());
         if (cachedResponse != null) {
@@ -28,9 +40,19 @@ public class PaymentRiskService {
         List<RiskRuleResult> results = evaluateRules(request);
         int riskScore = results.stream().mapToInt(RiskRuleResult::getScore).sum();
         List<String> reasons = results.stream().map(RiskRuleResult::getReason).toList();
-        PaymentRisk assessment = repository.save(toPaymentRisk(request, riskScore, reasons));
-        PaymentRiskResponse response = toResponse(assessment, request);
+        PaymentRisk paymentRisk = toPaymentRisk(request, riskScore, reasons);
 
+        try
+        {
+            entityManager.persist(paymentRisk);
+            entityManager.flush();
+        }
+        catch (PersistenceException e)
+        {
+            return getPayment(request.getPaymentId());
+        }
+
+        PaymentRiskResponse response = toResponse(paymentRisk, request);
         paymentRiskCache.put(request.getPaymentId(), response);
         return response;
     }
@@ -40,13 +62,16 @@ public class PaymentRiskService {
         if (cachedResponse != null) {
             return cachedResponse;
         }
-
-        PaymentRisk assessment = repository.findById(paymentId).orElseThrow();
+        PaymentRisk assessment = entityManager.find(PaymentRisk.class, paymentId);
+        if (assessment == null)
+        {
+            throw new IllegalArgumentException("Payment not found: " + paymentId);
+        }
         PaymentRiskResponse response = toResponse(assessment, toRequest(assessment));
-
         paymentRiskCache.put(assessment.getPaymentId(), response);
         return response;
     }
+
 
     private List<RiskRuleResult> evaluateRules(PaymentRiskRequest request) {
         return riskRules.stream()
@@ -55,6 +80,7 @@ public class PaymentRiskService {
     }
 
     private PaymentRisk toPaymentRisk(PaymentRiskRequest request, int riskScore, List<String> reasons) {
+        Instant now = Instant.now();
         return PaymentRisk.builder()
                 .paymentId(request.getPaymentId())
                 .amount(request.getAmount())
@@ -65,7 +91,8 @@ public class PaymentRiskService {
                 .status(determineDecision(riskScore))
                 .riskScore(riskScore)
                 .reasons(reasons)
-                .createdAt(Instant.now())
+                .createdAt(now)
+                .lastUpdatedAt(now)
                 .build();
     }
 
@@ -83,11 +110,13 @@ public class PaymentRiskService {
     private PaymentRiskResponse toResponse(PaymentRisk assessment, PaymentRiskRequest request) {
         return PaymentRiskResponse.builder()
                 .paymentId(assessment.getPaymentId())
+                .version(assessment.getVersion())
                 .paymentDetails(request)
                 .riskScore(assessment.getRiskScore())
                 .status(assessment.getStatus())
                 .reasons(assessment.getReasons())
                 .createdAt(assessment.getCreatedAt())
+                .lastUpdatedAt(assessment.getLastUpdatedAt())
                 .build();
     }
 
