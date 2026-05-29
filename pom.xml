@@ -84,12 +84,58 @@
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-core</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
 			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.13</version>
+				<configuration>
+					<includes>
+						<include>com/reeya/payment_risk_engine/*</include>
+						<include>com/reeya/payment_risk_engine/**/*</include>
+					</includes>
+					<excludes>
+						<exclude>*MockitoMock*</exclude>
+						<exclude>*Hibernate*</exclude>
+					</excludes>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</path>
+					</annotationProcessorPaths>
+				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.flywaydb</groupId>
@@ -102,6 +148,7 @@
 						<version>2.3.232</version>
 					</dependency>
 				</dependencies>
+
 			</plugin>
 		</plugins>
 	</build>
