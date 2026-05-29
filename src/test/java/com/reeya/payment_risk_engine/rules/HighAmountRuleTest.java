@@ -28,7 +28,6 @@ public class HighAmountRuleTest {
                 .merchantName("Test Merchant")
                 .merchantCountry("US")
                 .buyerIp("127.0.0.1")
-                .buyerCountry("US")
                 .build();
 
         RiskRuleResult result = highAmountRule.evaluate(request);
@@ -48,7 +47,6 @@ public class HighAmountRuleTest {
                 .merchantName("Test Merchant")
                 .merchantCountry("US")
                 .buyerIp("127.0.0.1")
-                .buyerCountry("US")
                 .build();
 
         RiskRuleResult result = highAmountRule.evaluate(request);
@@ -68,7 +66,6 @@ public class HighAmountRuleTest {
                 .merchantName("Test Merchant")
                 .merchantCountry("US")
                 .buyerIp("127.0.0.1")
-                .buyerCountry("US")
                 .build();
 
         RiskRuleResult result = highAmountRule.evaluate(request);
@@ -88,7 +85,6 @@ public class HighAmountRuleTest {
                 .merchantName("Test Merchant")
                 .merchantCountry("US")
                 .buyerIp("127.0.0.1")
-                .buyerCountry("US")
                 .build();
 
         RiskRuleResult result = highAmountRule.evaluate(request);
@@ -108,7 +104,6 @@ public class HighAmountRuleTest {
                 .merchantName("Test Merchant")
                 .merchantCountry("US")
                 .buyerIp("127.0.0.1")
-                .buyerCountry("US")
                 .build();
 
         RiskRuleResult result = highAmountRule.evaluate(request);

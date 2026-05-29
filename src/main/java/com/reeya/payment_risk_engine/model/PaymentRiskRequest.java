@@ -19,5 +19,4 @@ public class PaymentRiskRequest
     private String merchantName;
     private String merchantCountry;
     private String buyerIp;
-    private String buyerCountry;
 }

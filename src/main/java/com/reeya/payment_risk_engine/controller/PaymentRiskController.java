@@ -3,8 +3,6 @@ import com.reeya.payment_risk_engine.model.PaymentRiskRequest;
 import com.reeya.payment_risk_engine.model.PaymentRiskResponse;
 import com.reeya.payment_risk_engine.service.PaymentRiskService;
 import jakarta.validation.Valid;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
