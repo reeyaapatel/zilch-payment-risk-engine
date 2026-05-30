@@ -24,3 +24,10 @@ curl -X POST http://localhost:8080/payments/risk \
     "buyerIp": "1.0.0.1",
     "buyerCountry": "UK"
   }'
+
+
+
+
+  NOTES:
+      -- add observabilty and tracing tools to time rsik calcaulatiosn
+  -- merchant country would be looked up internally in the db - this is out of scope so comes in via the request

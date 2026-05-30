@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -185,13 +186,11 @@ class PaymentRiskControllerTest {
 
     @Test
     void updateStatus_whenStatusIsInvalidEnumShouldReturnBadRequest() throws Exception {
+        Map<String, String> request = Map.of("status", "notvalidstatusforenum");
+
         mockMvc.perform(patch("/payments/PAY-001/status")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "status": "notvalidstatusforenum"
-                                }
-                                """))
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Invalid request"));
 
