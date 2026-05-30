@@ -6,7 +6,8 @@ The business logic is intentionally simplified. In a real-world platform, risk d
 ## Design Decisions
 
 * **Strategy Pattern** – Each risk check implements `RiskRule`, making it easy to add new rules without changing the core assessment flow.
-* **Parallel Execution** – Rules are executed using `CompletableFuture` and a dedicated thread pool to simulate independent verification checks running concurrently.
+* **Idempotency** – Payment assessments are keyed by `paymentId`, ensuring the same payment can be submitted multiple times without creating duplicate records or inconsistent outcomes. This is a common requirement in payment systems where retries may occur due to network failures or client timeouts.
+* **Parallel Execution** – Risk rules are executed using `CompletableFuture` and a dedicated thread pool to simulate independent verification checks running concurrently.
 * **Failure Handling** – Rule failures and timeouts generate a high-risk fallback result, ensuring uncertain payments are reviewed rather than automatically approved.
 * **Persistence** – H2 and Flyway are used to demonstrate persistence and schema versioning. A production system would likely use PostgreSQL.
 * **Caching** – Caffeine is used to cache external API responses and reduce repeated lookups. In a production environment, Redis would be a better choice as services are typically horizontally scaled and cached data may need to be shared across multiple application instances and consumers.
@@ -26,6 +27,7 @@ If developing the project further, I would consider the following improvements:
 * Improve the database table design. E.g. Risk reasons are currently stored as a list on the payment_risk table. A more scalable approach would be to model reasons as a child table with a foreign key relationship to the payment_risk, allowing reasons to be categorised, queried independently, and filtered by importance.
 * Improve overall database design. E.g. Authentication (not password), introduce database partitioning to improve performance and simplify data retention strategies and add housekeeping processes to archive or purge historical assessment data in line with retention requirements.
 * Add support for manual review workflows and status updates following investigation.
+* Encryption for incoming and outgoing data.
 
 
 ## Current Risk Rules 
@@ -33,6 +35,16 @@ If developing the project further, I would consider the following improvements:
 - `HighAmountRule`: scores payments based on amount thresholds.
 - `BuyerMerchantMismatchRule`: compares the buyer IP country code with the merchant country code.
 - `CreditScoreRule`: uses cached credit-score lookups to score customer credit risk.
+
+## Risk Scoring
+
+Each rule returns a risk score and reason. Scores are aggregated to produce an overall risk score which determines the payment outcome:
+
+- 0-39 → APPROVED
+- 40-69 → REQUIRES_REVIEW
+- 70+ → DECLINED
+
+The thresholds and scoring model are intentionally simple and are intended to demonstrate the risk assessment flow rather than represent a production-grade fraud model.
 
 ## Run Locally
 
@@ -99,6 +111,13 @@ curl -X PATCH http://localhost:8080/payments/PAY123/status \
   -d '{
     "status": "APPROVED"
   }'
+```
+
+Retrieve a payment:
+
+```bash
+curl -X GET http://localhost:8080/payments/PAY123
+
 ```
 
 ## Notes
