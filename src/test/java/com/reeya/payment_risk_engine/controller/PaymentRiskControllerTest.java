@@ -7,7 +7,7 @@ import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskResponse;
 import com.reeya.payment_risk_engine.model.Status;
 import com.reeya.payment_risk_engine.model.api.PaymentStatusUpdate;
-import com.reeya.payment_risk_engine.service.paymentRisk.PaymentRiskService;
+import com.reeya.payment_risk_engine.service.PaymentRiskService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;

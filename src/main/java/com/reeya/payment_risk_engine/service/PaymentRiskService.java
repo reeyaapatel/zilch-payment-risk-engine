@@ -1,4 +1,4 @@
-package com.reeya.payment_risk_engine.service.paymentRisk;
+package com.reeya.payment_risk_engine.service;
 
 import com.reeya.payment_risk_engine.model.*;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
@@ -7,9 +7,9 @@ import com.reeya.payment_risk_engine.model.api.PaymentStatusUpdate;
 import com.reeya.payment_risk_engine.model.persistence.PaymentRisk;
 import com.reeya.payment_risk_engine.rules.RiskRule;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -26,10 +26,10 @@ import java.util.concurrent.TimeUnit;
  * persistence is done after the risk assessment is complete
  * Idempotency is achieved by checking if payment exists, or through database constraints if passes inital checks
  */
+@Slf4j
 @Service
 public class PaymentRiskService {
 
-    @PersistenceContext
     private final EntityManager entityManager;
     private final List<RiskRule> riskRules;
     private final Executor riskRuleExecutor;
@@ -73,6 +73,7 @@ public class PaymentRiskService {
         }
         catch (PersistenceException e)
         {
+            log.info("Failed to persist payment risk for payment id: {}", request.getPaymentId(), e);
             return getPaymentRiskResponse(request.getPaymentId());
         }
 

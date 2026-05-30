@@ -2,7 +2,7 @@ package com.reeya.payment_risk_engine.config;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.reeya.payment_risk_engine.service.credit.CreditScoreCacheKey;
+import com.reeya.payment_risk_engine.service.CreditScoreCacheKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,7 +20,7 @@ public class CreditScoreCacheConfig {
     @Bean
     public Cache<CreditScoreCacheKey, Integer> creditScoreCache(
             @Value("${credit.score.cache.maximum-size:10000}") long maximumSize,
-            @Value("${credit.score.cache.expire-after-write-minutes:15}") long expireAfterWriteMinutes)
+            @Value("${credit.score.cache.expire-after-write-minutes:1000}") long expireAfterWriteMinutes)
     {
         return Caffeine.newBuilder()
                 .maximumSize(maximumSize)

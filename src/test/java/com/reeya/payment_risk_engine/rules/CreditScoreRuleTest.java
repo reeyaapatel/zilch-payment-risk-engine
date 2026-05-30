@@ -3,7 +3,7 @@ package com.reeya.payment_risk_engine.rules;
 import com.reeya.payment_risk_engine.model.RiskLevel;
 import com.reeya.payment_risk_engine.model.RiskRuleResult;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
-import com.reeya.payment_risk_engine.service.credit.CreditScoreService;
+import com.reeya.payment_risk_engine.service.CreditScoreService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;

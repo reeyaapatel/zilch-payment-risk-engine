@@ -6,13 +6,13 @@ import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class CreditScoreClientTest {
+public class StubCreditScoreClientTest {
 
     @Test
     public void calculateCreditScore_returnsScoreInExpectedRange()
     {
         //GIVEN
-        CreditScoreClient creditScoreClient = new CreditScoreClient();
+        StubCreditScoreClient creditScoreClient = new StubCreditScoreClient();
 
         //WHEN
         int score = creditScoreClient.calculateCreditScore("CUSTOMER-001", LocalDate.parse("2026-05-30"));

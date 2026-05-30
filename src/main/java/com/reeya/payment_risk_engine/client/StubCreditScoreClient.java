@@ -9,7 +9,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * This is a mock client to simulate the credit score retrieval for a customer id.
  */
 @Component
-public class CreditScoreClient {
+public class StubCreditScoreClient {
 
     public int calculateCreditScore(String customerId, LocalDate businessDate)
     {

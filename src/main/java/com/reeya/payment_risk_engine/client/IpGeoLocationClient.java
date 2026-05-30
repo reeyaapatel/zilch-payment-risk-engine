@@ -37,7 +37,9 @@ public class IpGeoLocationClient {
 
             if (response == null
                     || !SUCCESS.equalsIgnoreCase(response.getStatus())
-                    || !StringUtils.hasText(response.getCountryCode())) {
+                    || !StringUtils.hasText(response.getCountryCode()))
+            {
+                log.error("Invalid or missing IP geolocation data for IP: " + ipAddress);
                 return Optional.empty();
             }
 

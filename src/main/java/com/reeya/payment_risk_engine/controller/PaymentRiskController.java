@@ -2,7 +2,7 @@ package com.reeya.payment_risk_engine.controller;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskResponse;
 import com.reeya.payment_risk_engine.model.api.PaymentStatusUpdate;
-import com.reeya.payment_risk_engine.service.paymentRisk.PaymentRiskService;
+import com.reeya.payment_risk_engine.service.PaymentRiskService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;

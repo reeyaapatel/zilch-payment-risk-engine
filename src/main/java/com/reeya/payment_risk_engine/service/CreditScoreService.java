@@ -1,7 +1,7 @@
-package com.reeya.payment_risk_engine.service.credit;
+package com.reeya.payment_risk_engine.service;
 
 import com.github.benmanes.caffeine.cache.Cache;
-import com.reeya.payment_risk_engine.client.CreditScoreClient;
+import com.reeya.payment_risk_engine.client.StubCreditScoreClient;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -13,9 +13,9 @@ import java.time.LocalDate;
 public class CreditScoreService {
 
     private final Cache<CreditScoreCacheKey, Integer> creditScoreCache;
-    private final CreditScoreClient creditScoreClient;
+    private final StubCreditScoreClient creditScoreClient;
 
-    public CreditScoreService(Cache<CreditScoreCacheKey, Integer> creditScoreCache, CreditScoreClient creditScoreClient)
+    public CreditScoreService(Cache<CreditScoreCacheKey, Integer> creditScoreCache, StubCreditScoreClient creditScoreClient)
     {
         this.creditScoreCache = creditScoreCache;
         this.creditScoreClient = creditScoreClient;
