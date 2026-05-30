@@ -14,17 +14,23 @@ public class HighAmountRule implements RiskRule {
 
     private static final String RULE_NAME = "HIGH_AMOUNT_RULE";
 
-    @Value("${high.amount.high.risk.amount:1000}")
-    BigDecimal highRiskAmount;
+    private final BigDecimal highRiskAmount;
+    private final BigDecimal reviewRiskAmount;
+    private final int highRiskScore;
+    private final int mediumRiskScore;
 
-    @Value("${high.amount.review.risk.amount:500}")
-    BigDecimal reviewRiskAmount;
-
-    @Value("${high.amount.high.risk.score:10}")
-    int highRiskScore;
-
-    @Value("${high.amount.review.risk.score:5}")
-    int mediumRiskScore;
+    public HighAmountRule(
+            @Value("${high.amount.high.risk.amount:1000}") BigDecimal highRiskAmount,
+            @Value("${high.amount.review.risk.amount:500}") BigDecimal reviewRiskAmount,
+            @Value("${high.amount.high.risk.score:10}") int highRiskScore,
+            @Value("${high.amount.review.risk.score:5}") int mediumRiskScore
+    )
+    {
+        this.highRiskAmount = highRiskAmount;
+        this.reviewRiskAmount = reviewRiskAmount;
+        this.highRiskScore = highRiskScore;
+        this.mediumRiskScore = mediumRiskScore;
+    }
 
     @Override
     public RiskRuleResult evaluate(PaymentRiskRequest request) {
@@ -62,4 +68,3 @@ public class HighAmountRule implements RiskRule {
         return RULE_NAME;
     }
 }
-

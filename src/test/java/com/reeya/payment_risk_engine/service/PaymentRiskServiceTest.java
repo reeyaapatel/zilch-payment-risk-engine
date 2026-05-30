@@ -17,7 +17,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -54,9 +53,7 @@ public class PaymentRiskServiceTest {
     @BeforeEach
     public void setUp() {
 
-        paymentRiskService = new PaymentRiskService(entityManager, Arrays.asList(riskRule1, riskRule2), directExecutor);
-        ReflectionTestUtils.setField(paymentRiskService, "delineThreshold", 70);
-        ReflectionTestUtils.setField(paymentRiskService, "reviewThreshold",40);
+        paymentRiskService = new PaymentRiskService(entityManager, Arrays.asList(riskRule1, riskRule2), directExecutor, 70, 40);
         paymentRiskRequest = PaymentRiskRequest.builder()
                 .paymentId("PAY-001")
                 .customerId("CUSTOMER-001")

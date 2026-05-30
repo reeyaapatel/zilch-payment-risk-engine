@@ -16,6 +16,7 @@ curl -X POST http://localhost:8080/payments/risk \
   -H "Content-Type: application/json" \
   -d '{
     "paymentId": "PAY123",
+    "customerId": "CUST123",
     "businessDate": "2026-05-30",
     "amount": 100.00,
     "currency": "GBP",

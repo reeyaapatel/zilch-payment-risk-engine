@@ -10,8 +10,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -23,20 +21,29 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 @Service
-@RequiredArgsConstructor
 public class PaymentRiskService {
-
-    @Value("${payment.risk.deline.threshold:70}")
-    int delineThreshold;
-
-    @Value("${payment.risk.review.threshold:40}")
-    int reviewThreshold;
 
     @PersistenceContext
     private final EntityManager entityManager;
-
     private final List<RiskRule> riskRules;
     private final Executor riskRuleExecutor;
+    private final int declineThreshold;
+    private final int reviewThreshold;
+
+    public PaymentRiskService(
+            EntityManager entityManager,
+            List<RiskRule> riskRules,
+            Executor riskRuleExecutor,
+            @Value("${payment.risk.decline.threshold:70}") int declineThreshold,
+            @Value("${payment.risk.review.threshold:40}") int reviewThreshold
+    )
+    {
+        this.entityManager = entityManager;
+        this.riskRules = riskRules;
+        this.riskRuleExecutor = riskRuleExecutor;
+        this.declineThreshold = declineThreshold;
+        this.reviewThreshold = reviewThreshold;
+    }
 
     @Transactional
     public PaymentRiskResponse assessRisk(PaymentRiskRequest request) {
@@ -156,7 +163,7 @@ public class PaymentRiskService {
     }
 
     private Status determineDecision(int score) {
-        if (score >= delineThreshold) {
+        if (score >= declineThreshold) {
             return Status.DECLINED;
         }
         if (score >= reviewThreshold) {

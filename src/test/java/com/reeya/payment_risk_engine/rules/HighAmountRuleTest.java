@@ -7,7 +7,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -21,12 +20,7 @@ public class HighAmountRuleTest {
 
     @BeforeEach
     void setUp() {
-        highAmountRule = new HighAmountRule();
-        ReflectionTestUtils.setField(highAmountRule, "highRiskAmount", BigDecimal.valueOf(1000));
-        ReflectionTestUtils.setField(highAmountRule, "reviewRiskAmount", BigDecimal.valueOf(500));
-        ReflectionTestUtils.setField(highAmountRule, "highRiskScore", 10);
-        ReflectionTestUtils.setField(highAmountRule, "mediumRiskScore", 5);
-
+        highAmountRule = new HighAmountRule(BigDecimal.valueOf(1000), BigDecimal.valueOf(500), 10, 5);
     }
 
     @ParameterizedTest
