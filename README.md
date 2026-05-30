@@ -1,6 +1,6 @@
 # Payment Risk Engine
 
-This project demonstrates an implementation of a payment risk engine which approves payments prior to a trasnaction taking place.
+This project demonstrates an implementation of a payment risk engine which approves payments prior to a transaction taking place.
 The business logic is intentionally simplified. In a real-world platform, risk decisions would typically involve more sophisticated modelling, machine learning, and behavioural analysis. The focus of this project is to demonstrate the technical design and architecture of a risk assessment component within a payment flow.
 
 ## Design Decisions
@@ -13,7 +13,7 @@ The business logic is intentionally simplified. In a real-world platform, risk d
 * **Configuration** – Thresholds, executor settings, and external endpoints are configurable through application properties.
 
 ## Future Improvements
-If developing the project further, I would conside the following improvements:
+If developing the project further, I would consider the following improvements:
 * Store rule thresholds and configuration in the database rather than application properties.
 * Support environment-specific configuration (e.g. DEV, UAT, PROD).
 * Implement automatic refresh of configuration values when updated externally, avoiding application restarts.
@@ -24,7 +24,7 @@ If developing the project further, I would conside the following improvements:
 * Add authentication and authorization to secure API endpoints and ensure only trusted systems can submit or retrieve payment assessments.
 * Integrate with external fraud, credit, and customer verification providers.
 * Improve the database table design. E.g. Risk reasons are currently stored as a list on the payment_risk table. A more scalable approach would be to model reasons as a child table with a foreign key relationship to the payment_risk, allowing reasons to be categorised, queried independently, and filtered by importance.
-* Improve overall database design. E.g. Authenticaion (not password), introduce database partitioning to improve performance and simplify data retention strategies and add housekeeping processes to archive or purge historical assessment data in line with retention requirements.
+* Improve overall database design. E.g. Authentication (not password), introduce database partitioning to improve performance and simplify data retention strategies and add housekeeping processes to archive or purge historical assessment data in line with retention requirements.
 * Add support for manual review workflows and status updates following investigation.
 
 
