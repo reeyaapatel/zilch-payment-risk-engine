@@ -4,6 +4,7 @@ package com.reeya.payment_risk_engine.model.api;
 import com.reeya.payment_risk_engine.model.Status;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
@@ -17,7 +18,11 @@ public class PaymentRiskResponse {
 
     private String paymentId;
     private Integer version;
-    private PaymentRiskRequest paymentDetails;
+    private BigDecimal amount;
+    private String currency;
+    private String merchantName;
+    private String merchantCountry;
+    private String buyerIp;
     private Integer riskScore;
     private Status status;
     private List<String> reasons;

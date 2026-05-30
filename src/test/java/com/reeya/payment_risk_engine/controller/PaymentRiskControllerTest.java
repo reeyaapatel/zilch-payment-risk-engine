@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskResponse;
 import com.reeya.payment_risk_engine.model.Status;
+import com.reeya.payment_risk_engine.model.api.PaymentStatusUpdate;
 import com.reeya.payment_risk_engine.service.PaymentRiskService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -18,6 +19,7 @@ import java.time.Instant;
 import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -49,12 +51,11 @@ class PaymentRiskControllerTest {
                 .andExpect(jsonPath("$.status").value("DECLINED"))
                 .andExpect(jsonPath("$.reasons[0]").value("Low risk"))
                 .andExpect(jsonPath("$.reasons[1]").value("IP mismatch"))
-                .andExpect(jsonPath("$.paymentDetails.paymentId").value("PAY-001"))
-                .andExpect(jsonPath("$.paymentDetails.amount").value(100))
-                .andExpect(jsonPath("$.paymentDetails.currency").value("GBP"))
-                .andExpect(jsonPath("$.paymentDetails.merchantName").value("MARKS&SPENCER"))
-                .andExpect(jsonPath("$.paymentDetails.merchantCountry").value("UK"))
-                .andExpect(jsonPath("$.paymentDetails.buyerIp").value("1.2.3.4"));
+                .andExpect(jsonPath("$.amount").value(100))
+                .andExpect(jsonPath("$.currency").value("GBP"))
+                .andExpect(jsonPath("$.merchantName").value("MARKS&SPENCER"))
+                .andExpect(jsonPath("$.merchantCountry").value("UK"))
+                .andExpect(jsonPath("$.buyerIp").value("1.2.3.4"));
 
         Mockito.verify(paymentRiskService).assessRisk(Mockito.any(PaymentRiskRequest.class));
         Mockito.verifyNoMoreInteractions(paymentRiskService);
@@ -63,7 +64,7 @@ class PaymentRiskControllerTest {
     @Test
     void getPayment_shouldReturnPaymentRiskResponse() throws Exception {
         PaymentRiskRequest request = paymentRiskRequest();
-        Mockito.when(paymentRiskService.getPayment("PAY-001")).thenReturn(paymentRiskResponse(request));
+        Mockito.when(paymentRiskService.getPaymentRiskResponse("PAY-001")).thenReturn(paymentRiskResponse(request));
 
         mockMvc.perform(get("/payments/PAY-001"))
                 .andExpect(status().isOk())
@@ -72,10 +73,77 @@ class PaymentRiskControllerTest {
                 .andExpect(jsonPath("$.status").value("DECLINED"))
                 .andExpect(jsonPath("$.reasons[0]").value("Low risk"))
                 .andExpect(jsonPath("$.reasons[1]").value("IP mismatch"))
-                .andExpect(jsonPath("$.paymentDetails.paymentId").value("PAY-001"));
+                .andExpect(jsonPath("$.amount").value(100));
 
-        Mockito.verify(paymentRiskService).getPayment("PAY-001");
+        Mockito.verify(paymentRiskService).getPaymentRiskResponse("PAY-001");
         Mockito.verifyNoMoreInteractions(paymentRiskService);
+    }
+
+    @Test
+    void updateStatus_shouldReturnUpdatedPaymentRiskResponse() throws Exception {
+        PaymentRiskRequest request = paymentRiskRequest();
+        PaymentStatusUpdate update = PaymentStatusUpdate.builder()
+                .status(Status.APPROVED)
+                .build();
+        Mockito.when(paymentRiskService.updateStatus(Mockito.eq("PAY-001"), Mockito.any(PaymentStatusUpdate.class)))
+                .thenReturn(paymentRiskResponse(request, Status.APPROVED));
+
+        mockMvc.perform(patch("/payments/PAY-001/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(update)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paymentId").value("PAY-001"))
+                .andExpect(jsonPath("$.status").value("APPROVED"))
+                .andExpect(jsonPath("$.amount").value(100));
+
+        Mockito.verify(paymentRiskService).updateStatus(Mockito.eq("PAY-001"), Mockito.any(PaymentStatusUpdate.class));
+        Mockito.verifyNoMoreInteractions(paymentRiskService);
+    }
+
+    @Test
+    void getPayment_whenPaymentDoesNotExistShouldReturnNotFound() throws Exception {
+        Mockito.when(paymentRiskService.getPaymentRiskResponse("missing-id"))
+                .thenThrow(new IllegalArgumentException("Payment not found: missing-id"));
+
+        mockMvc.perform(get("/payments/missing-id"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("Payment not found: missing-id"));
+
+        Mockito.verify(paymentRiskService).getPaymentRiskResponse("missing-id");
+        Mockito.verifyNoMoreInteractions(paymentRiskService);
+    }
+
+    @Test
+    void updateStatus_whenPaymentDoesNotRequireReviewShouldReturnConflict() throws Exception {
+        PaymentStatusUpdate update = PaymentStatusUpdate.builder()
+                .status(Status.APPROVED)
+                .build();
+        Mockito.when(paymentRiskService.updateStatus(Mockito.eq("PAY-001"), Mockito.any(PaymentStatusUpdate.class)))
+                .thenThrow(new IllegalStateException("Payment status can only be updated when it requires review"));
+
+        mockMvc.perform(patch("/payments/PAY-001/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(update)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error").value("Payment status can only be updated when it requires review"));
+
+        Mockito.verify(paymentRiskService).updateStatus(Mockito.eq("PAY-001"), Mockito.any(PaymentStatusUpdate.class));
+        Mockito.verifyNoMoreInteractions(paymentRiskService);
+    }
+
+    @Test
+    void updateStatus_whenRequestIsInvalidShouldReturnBadRequest() throws Exception {
+        PaymentStatusUpdate update = PaymentStatusUpdate.builder()
+                .status(null)
+                .build();
+
+        mockMvc.perform(patch("/payments/PAY-001/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(update)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Invalid request"));
+
+        Mockito.verifyNoInteractions(paymentRiskService);
     }
 
     private PaymentRiskRequest paymentRiskRequest() {
@@ -90,11 +158,19 @@ class PaymentRiskControllerTest {
     }
 
     private PaymentRiskResponse paymentRiskResponse(PaymentRiskRequest request) {
+        return paymentRiskResponse(request, Status.DECLINED);
+    }
+
+    private PaymentRiskResponse paymentRiskResponse(PaymentRiskRequest request, Status status) {
         return PaymentRiskResponse.builder()
                 .paymentId("PAY-001")
-                .paymentDetails(request)
+                .amount(request.getAmount())
+                .currency(request.getCurrency())
+                .merchantName(request.getMerchantName())
+                .merchantCountry(request.getMerchantCountry())
+                .buyerIp(request.getBuyerIp())
                 .riskScore(101)
-                .status(Status.DECLINED)
+                .status(status)
                 .reasons(List.of("Low risk", "IP mismatch"))
                 .createdAt(Instant.parse("2026-05-29T10:15:30Z"))
                 .build();

@@ -1,6 +1,7 @@
 package com.reeya.payment_risk_engine.controller;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskResponse;
+import com.reeya.payment_risk_engine.model.api.PaymentStatusUpdate;
 import com.reeya.payment_risk_engine.service.PaymentRiskService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -26,7 +27,12 @@ public class PaymentRiskController {
     @GetMapping("/{paymentId}")
     public PaymentRiskResponse getPayment(@PathVariable String paymentId)
     {
-        return paymentRiskService.getPayment(paymentId);
+        return paymentRiskService.getPaymentRiskResponse(paymentId);
+    }
+
+    @PatchMapping("/{paymentId}/status")
+    public PaymentRiskResponse updateStatus(@PathVariable String paymentId, @Valid @RequestBody PaymentStatusUpdate update)
+    {
+        return paymentRiskService.updateStatus(paymentId, update);
     }
 }
-

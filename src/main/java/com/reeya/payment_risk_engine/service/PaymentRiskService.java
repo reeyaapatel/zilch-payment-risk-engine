@@ -3,8 +3,8 @@ package com.reeya.payment_risk_engine.service;
 import com.reeya.payment_risk_engine.model.*;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskResponse;
+import com.reeya.payment_risk_engine.model.api.PaymentStatusUpdate;
 import com.reeya.payment_risk_engine.model.persistence.PaymentRisk;
-import com.reeya.payment_risk_engine.repository.PaymentRiskRepository;
 import com.reeya.payment_risk_engine.rules.RiskRule;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -15,8 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -28,13 +27,11 @@ public class PaymentRiskService {
 
     private final List<RiskRule> riskRules;
 
-    private final Map<String, PaymentRiskResponse> paymentRiskCache = new ConcurrentHashMap<>();
-
     @Transactional
     public PaymentRiskResponse assessRisk(PaymentRiskRequest request) {
-        PaymentRiskResponse cachedResponse = paymentRiskCache.get(request.getPaymentId());
-        if (cachedResponse != null) {
-            return cachedResponse;
+        Optional<PaymentRisk> existingPayment = findPaymentRisk(request.getPaymentId());
+        if (existingPayment.isPresent()) {
+            return toResponse(existingPayment.get());
         }
 
         List<RiskRuleResult> results = evaluateRules(request);
@@ -49,29 +46,53 @@ public class PaymentRiskService {
         }
         catch (PersistenceException e)
         {
-            return getPayment(request.getPaymentId());
+            return getPaymentRiskResponse(request.getPaymentId());
         }
 
-        PaymentRiskResponse response = toResponse(paymentRisk, request);
-        paymentRiskCache.put(request.getPaymentId(), response);
-        return response;
+        return toResponse(paymentRisk);
     }
 
-    public PaymentRiskResponse getPayment(String paymentId) {
-        PaymentRiskResponse cachedResponse = paymentRiskCache.get(paymentId);
-        if (cachedResponse != null) {
-            return cachedResponse;
+    @Transactional
+    public PaymentRiskResponse updateStatus(String paymentId, PaymentStatusUpdate update) {
+        if (paymentId == null || paymentId.isBlank())
+        {
+            throw new IllegalArgumentException("Payment id is required");
         }
+        if (update.getStatus() == null)
+        {
+            throw new IllegalArgumentException("Status is required");
+        }
+
         PaymentRisk assessment = entityManager.find(PaymentRisk.class, paymentId);
         if (assessment == null)
         {
             throw new IllegalArgumentException("Payment not found: " + paymentId);
         }
-        PaymentRiskResponse response = toResponse(assessment, toRequest(assessment));
-        paymentRiskCache.put(assessment.getPaymentId(), response);
-        return response;
+        if (assessment.getStatus() != Status.REQUIRES_REVIEW)
+        {
+            throw new IllegalStateException("Payment status can only be updated when it requires review");
+        }
+
+        assessment.setStatus(update.getStatus());
+        assessment.setLastUpdatedAt(Instant.now());
+        entityManager.flush();
+
+        return toResponse(assessment);
     }
 
+    public PaymentRiskResponse getPaymentRiskResponse(String paymentId)
+    {
+        return toResponse(getPaymentRiskOrThrow(paymentId));
+    }
+
+    private Optional<PaymentRisk> findPaymentRisk(String paymentId) {
+        return Optional.ofNullable(entityManager.find(PaymentRisk.class, paymentId));
+    }
+
+    private PaymentRisk getPaymentRiskOrThrow(String paymentId) {
+        return findPaymentRisk(paymentId)
+                .orElseThrow(() -> new IllegalArgumentException("Payment not found: " + paymentId));
+    }
 
     private List<RiskRuleResult> evaluateRules(PaymentRiskRequest request) {
         return riskRules.stream()
@@ -96,22 +117,15 @@ public class PaymentRiskService {
                 .build();
     }
 
-    private PaymentRiskRequest toRequest(PaymentRisk assessment) {
-        return PaymentRiskRequest.builder()
-                .paymentId(assessment.getPaymentId())
-                .amount(assessment.getAmount())
-                .currency(assessment.getCurrency())
-                .merchantCountry(assessment.getMerchantCountry())
-                .merchantName(assessment.getMerchantName())
-                .buyerIp(assessment.getBuyerIp())
-                .build();
-    }
-
-    private PaymentRiskResponse toResponse(PaymentRisk assessment, PaymentRiskRequest request) {
+    private PaymentRiskResponse toResponse(PaymentRisk assessment) {
         return PaymentRiskResponse.builder()
                 .paymentId(assessment.getPaymentId())
                 .version(assessment.getVersion())
-                .paymentDetails(request)
+                .amount(assessment.getAmount())
+                .currency(assessment.getCurrency())
+                .merchantName(assessment.getMerchantName())
+                .merchantCountry(assessment.getMerchantCountry())
+                .buyerIp(assessment.getBuyerIp())
                 .riskScore(assessment.getRiskScore())
                 .status(assessment.getStatus())
                 .reasons(assessment.getReasons())
