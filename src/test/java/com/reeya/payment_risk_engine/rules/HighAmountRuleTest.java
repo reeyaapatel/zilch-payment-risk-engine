@@ -4,9 +4,12 @@ import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
 import com.reeya.payment_risk_engine.model.RiskLevel;
 import com.reeya.payment_risk_engine.model.RiskRuleResult;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.math.BigDecimal;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -19,98 +22,42 @@ public class HighAmountRuleTest {
         highAmountRule = new HighAmountRule();
     }
 
-    @Test
-    void evaluate_shouldReturnHighRisk_whenAmountIsGreaterThan1000() {
-        PaymentRiskRequest request = PaymentRiskRequest.builder()
+    @ParameterizedTest
+    @MethodSource("amountRiskCases")
+    void evaluate_shouldReturnExpectedRisk(
+            BigDecimal amount,
+            int expectedScore,
+            RiskLevel expectedRiskLevel,
+            String expectedReason
+    ) {
+        PaymentRiskRequest request = paymentRiskRequest(amount);
+
+        RiskRuleResult result = highAmountRule.evaluate(request);
+
+        assertEquals("HIGH_AMOUNT_RULE", result.getRuleName());
+        assertEquals(expectedScore, result.getScore());
+        assertEquals(expectedRiskLevel, result.getRiskLevel());
+        assertEquals(expectedReason, result.getReason());
+    }
+
+    private static Stream<Arguments> amountRiskCases() {
+        return Stream.of(
+                Arguments.of(BigDecimal.valueOf(1000.01), 10, RiskLevel.HIGH, "Amount exceeds high risk threshold"),
+                Arguments.of(BigDecimal.valueOf(1000), 5, RiskLevel.MEDIUM, "Amount exceeds medium risk threshold"),
+                Arguments.of(BigDecimal.valueOf(750), 5, RiskLevel.MEDIUM, "Amount exceeds medium risk threshold"),
+                Arguments.of(BigDecimal.valueOf(500.01), 5, RiskLevel.MEDIUM, "Amount exceeds medium risk threshold"),
+                Arguments.of(BigDecimal.valueOf(500), 1, RiskLevel.LOW, "Amount is within acceptable threshold")
+        );
+    }
+
+    private PaymentRiskRequest paymentRiskRequest(BigDecimal amount) {
+        return PaymentRiskRequest.builder()
                 .paymentId("payment-001")
-                .amount(BigDecimal.valueOf(1000.01))
+                .amount(amount)
                 .currency("USD")
                 .merchantName("Test Merchant")
                 .merchantCountry("US")
                 .buyerIp("127.0.0.1")
                 .build();
-
-        RiskRuleResult result = highAmountRule.evaluate(request);
-
-        assertEquals("HIGH_AMOUNT_RULE", result.getRuleName());
-        assertEquals(10, result.getScore());
-        assertEquals(RiskLevel.HIGH, result.getRiskLevel());
-        assertEquals("Amount exceeds threshold of 1000", result.getReason());
-    }
-
-    @Test
-    void evaluate_shouldReturnMediumRisk_whenAmountIsGreaterThan500AndLessThanOrEqualTo1000() {
-        PaymentRiskRequest request = PaymentRiskRequest.builder()
-                .paymentId("payment-002")
-                .amount(BigDecimal.valueOf(750))
-                .currency("USD")
-                .merchantName("Test Merchant")
-                .merchantCountry("US")
-                .buyerIp("127.0.0.1")
-                .build();
-
-        RiskRuleResult result = highAmountRule.evaluate(request);
-
-        assertEquals("HIGH_AMOUNT_RULE", result.getRuleName());
-        assertEquals(5, result.getScore());
-        assertEquals(RiskLevel.MEDIUM, result.getRiskLevel());
-        assertEquals("Amount exceeds threshold of 500", result.getReason());
-    }
-
-    @Test
-    void evaluate_shouldReturnLowRisk_whenAmountIsLessThanOrEqualTo500() {
-        PaymentRiskRequest request = PaymentRiskRequest.builder()
-                .paymentId("payment-003")
-                .amount(BigDecimal.valueOf(500))
-                .currency("USD")
-                .merchantName("Test Merchant")
-                .merchantCountry("US")
-                .buyerIp("127.0.0.1")
-                .build();
-
-        RiskRuleResult result = highAmountRule.evaluate(request);
-
-        assertEquals("HIGH_AMOUNT_RULE", result.getRuleName());
-        assertEquals(1, result.getScore());
-        assertEquals(RiskLevel.LOW, result.getRiskLevel());
-        assertEquals("Amount is within acceptable threshold", result.getReason());
-    }
-
-    @Test
-    void evaluate_shouldReturnMediumRisk_whenAmountIsExactlyAbove500() {
-        PaymentRiskRequest request = PaymentRiskRequest.builder()
-                .paymentId("payment-004")
-                .amount(BigDecimal.valueOf(500.01))
-                .currency("USD")
-                .merchantName("Test Merchant")
-                .merchantCountry("US")
-                .buyerIp("127.0.0.1")
-                .build();
-
-        RiskRuleResult result = highAmountRule.evaluate(request);
-
-        assertEquals("HIGH_AMOUNT_RULE", result.getRuleName());
-        assertEquals(5, result.getScore());
-        assertEquals(RiskLevel.MEDIUM, result.getRiskLevel());
-        assertEquals("Amount exceeds threshold of 500", result.getReason());
-    }
-
-    @Test
-    void evaluate_shouldReturnHighRisk_whenAmountIsExactlyAbove1000() {
-        PaymentRiskRequest request = PaymentRiskRequest.builder()
-                .paymentId("payment-005")
-                .amount(BigDecimal.valueOf(1000.01))
-                .currency("USD")
-                .merchantName("Test Merchant")
-                .merchantCountry("US")
-                .buyerIp("127.0.0.1")
-                .build();
-
-        RiskRuleResult result = highAmountRule.evaluate(request);
-
-        assertEquals("HIGH_AMOUNT_RULE", result.getRuleName());
-        assertEquals(10, result.getScore());
-        assertEquals(RiskLevel.HIGH, result.getRiskLevel());
-        assertEquals("Amount exceeds threshold of 1000", result.getReason());
     }
 }

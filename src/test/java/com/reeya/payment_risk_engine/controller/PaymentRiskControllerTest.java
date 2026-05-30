@@ -38,10 +38,12 @@ class PaymentRiskControllerTest {
 
     @Test
     void assessRisk_shouldReturnCreatedPaymentRiskResponse() throws Exception {
+        //GIVEN
         PaymentRiskRequest request = paymentRiskRequest();
         Mockito.when(paymentRiskService.assessRisk(Mockito.any(PaymentRiskRequest.class)))
                 .thenReturn(paymentRiskResponse(request));
 
+        //WHEN + THEN
         mockMvc.perform(post("/payments/risk")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -62,10 +64,34 @@ class PaymentRiskControllerTest {
     }
 
     @Test
+    void assessRisk_whenRequestIsInvalidShouldReturnBadRequest() throws Exception {
+        //GIVEN
+        PaymentRiskRequest request = PaymentRiskRequest.builder()
+                .paymentId("")
+                .amount(BigDecimal.ZERO)
+                .currency("") //-- IS BLANK
+                .merchantName("MARKS&SPENCER")
+                .merchantCountry("UK")
+                .buyerIp("1.2.3.4")
+                .build();
+
+        //WHEN + THEN
+        mockMvc.perform(post("/payments/risk")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Invalid request"));
+
+        Mockito.verifyNoInteractions(paymentRiskService);
+    }
+
+    @Test
     void getPayment_shouldReturnPaymentRiskResponse() throws Exception {
+        //GIVEN
         PaymentRiskRequest request = paymentRiskRequest();
         Mockito.when(paymentRiskService.getPaymentRiskResponse("PAY-001")).thenReturn(paymentRiskResponse(request));
 
+        //WHEN + THEN
         mockMvc.perform(get("/payments/PAY-001"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.paymentId").value("PAY-001"))
@@ -81,6 +107,7 @@ class PaymentRiskControllerTest {
 
     @Test
     void updateStatus_shouldReturnUpdatedPaymentRiskResponse() throws Exception {
+        //GIVEN
         PaymentRiskRequest request = paymentRiskRequest();
         PaymentStatusUpdate update = PaymentStatusUpdate.builder()
                 .status(Status.APPROVED)
@@ -88,6 +115,7 @@ class PaymentRiskControllerTest {
         Mockito.when(paymentRiskService.updateStatus(Mockito.eq("PAY-001"), Mockito.any(PaymentStatusUpdate.class)))
                 .thenReturn(paymentRiskResponse(request, Status.APPROVED));
 
+        //WHEN + THEN
         mockMvc.perform(patch("/payments/PAY-001/status")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(update)))
@@ -102,9 +130,11 @@ class PaymentRiskControllerTest {
 
     @Test
     void getPayment_whenPaymentDoesNotExistShouldReturnNotFound() throws Exception {
+        //GIVEN
         Mockito.when(paymentRiskService.getPaymentRiskResponse("missing-id"))
                 .thenThrow(new IllegalArgumentException("Payment not found: missing-id"));
 
+        //WHEN + THEN
         mockMvc.perform(get("/payments/missing-id"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("Payment not found: missing-id"));
@@ -115,12 +145,14 @@ class PaymentRiskControllerTest {
 
     @Test
     void updateStatus_whenPaymentDoesNotRequireReviewShouldReturnConflict() throws Exception {
+        // GIVEN
         PaymentStatusUpdate update = PaymentStatusUpdate.builder()
                 .status(Status.APPROVED)
                 .build();
         Mockito.when(paymentRiskService.updateStatus(Mockito.eq("PAY-001"), Mockito.any(PaymentStatusUpdate.class)))
                 .thenThrow(new IllegalStateException("Payment status can only be updated when it requires review"));
 
+        //WHEN + THEN
         mockMvc.perform(patch("/payments/PAY-001/status")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(update)))
@@ -131,17 +163,38 @@ class PaymentRiskControllerTest {
         Mockito.verifyNoMoreInteractions(paymentRiskService);
     }
 
+    
+
     @Test
     void updateStatus_whenRequestIsInvalidShouldReturnBadRequest() throws Exception {
+
+        //GIVEN
         PaymentStatusUpdate update = PaymentStatusUpdate.builder()
                 .status(null)
                 .build();
 
+        //WHEN + THEN
         mockMvc.perform(patch("/payments/PAY-001/status")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(update)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Invalid request"));
+
+        Mockito.verifyNoInteractions(paymentRiskService);
+    }
+
+    @Test
+    void updateStatus_whenStatusIsInvalidEnumShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(patch("/payments/PAY-001/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "status": "notvalidstatusforenum"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Invalid request"));
+
 
         Mockito.verifyNoInteractions(paymentRiskService);
     }

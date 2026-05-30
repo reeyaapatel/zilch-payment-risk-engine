@@ -304,37 +304,19 @@ public class PaymentRiskServiceTest {
         PaymentStatusUpdate update = PaymentStatusUpdate.builder()
                 .status(Status.APPROVED)
                 .build();
-        Mockito.when(entityManager.find(PaymentRisk.class, "PAY-404")).thenReturn(null);
+        Mockito.when(entityManager.find(PaymentRisk.class, "doesnt-exist-id")).thenReturn(null);
 
         //WHEN
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
-                () -> paymentRiskService.updateStatus("PAY-404", update)
+                () -> paymentRiskService.updateStatus("doesnt-exist-id", update)
         );
 
         //THEN
-        assertEquals("Payment not found: PAY-404", exception.getMessage());
-        Mockito.verify(entityManager).find(PaymentRisk.class, "PAY-404");
+        assertEquals("Payment not found: doesnt-exist-id", exception.getMessage());
+        Mockito.verify(entityManager).find(PaymentRisk.class, "doesnt-exist-id");
         Mockito.verifyNoInteractions(riskRule1, riskRule2);
         Mockito.verifyNoMoreInteractions(entityManager);
-    }
-
-    @Test
-    public void updateStatus_whenStatusIsNullThrowsError() {
-        //GIVEN
-        PaymentStatusUpdate update = PaymentStatusUpdate.builder()
-                .status(null)
-                .build();
-
-        //WHEN
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> paymentRiskService.updateStatus("PAY-001", update)
-        );
-
-        //THEN
-        assertEquals("Status is required", exception.getMessage());
-        Mockito.verifyNoInteractions(entityManager, riskRule1, riskRule2);
     }
 
     @Test

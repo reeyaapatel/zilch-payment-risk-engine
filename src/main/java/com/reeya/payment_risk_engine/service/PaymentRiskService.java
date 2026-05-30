@@ -21,7 +21,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class PaymentRiskService {
 
-//    private final PaymentRiskRepository repository;
+
     @PersistenceContext
     private final EntityManager entityManager;
 
@@ -58,16 +58,8 @@ public class PaymentRiskService {
         {
             throw new IllegalArgumentException("Payment id is required");
         }
-        if (update.getStatus() == null)
-        {
-            throw new IllegalArgumentException("Status is required");
-        }
 
-        PaymentRisk assessment = entityManager.find(PaymentRisk.class, paymentId);
-        if (assessment == null)
-        {
-            throw new IllegalArgumentException("Payment not found: " + paymentId);
-        }
+        PaymentRisk assessment = getPaymentRiskOrThrow(paymentId);
         if (assessment.getStatus() != Status.REQUIRES_REVIEW)
         {
             throw new IllegalStateException("Payment status can only be updated when it requires review");

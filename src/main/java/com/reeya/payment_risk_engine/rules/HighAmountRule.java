@@ -22,7 +22,7 @@ public class HighAmountRule implements RiskRule {
                     .ruleName(RULE_NAME)
                     .score(10)
                     .riskLevel(RiskLevel.HIGH)
-                    .reason("Amount exceeds threshold of 1000")
+                    .reason("Amount exceeds high risk threshold")
                     .build();
         }
 
@@ -32,7 +32,7 @@ public class HighAmountRule implements RiskRule {
                     .ruleName(RULE_NAME)
                     .score(5)
                     .riskLevel(RiskLevel.MEDIUM)
-                    .reason("Amount exceeds threshold of 500")
+                    .reason("Amount exceeds medium risk threshold")
                     .build();
         }
 
