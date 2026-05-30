@@ -9,13 +9,17 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * PaymentRiskResponse
+ */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
-public class PaymentRiskResponse {
+public class PaymentRiskResponse
+{
 
     private String paymentId;
     private Integer version;

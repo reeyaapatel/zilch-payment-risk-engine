@@ -8,8 +8,7 @@ A Spring Boot application for assessing payment risk before a transaction is pro
 - H2 database for lightweight persistence
 - Flyway for database migrations
 - Strategy pattern for extensible risk rules
-- `ConcurrentHashMap` as an in-memory cache for recent payment assessments
-- Unit testing around risk scoring and decision logic
+- Caffiene as an in-memory cache for recent payment assessments
 
 ## Design choices
 

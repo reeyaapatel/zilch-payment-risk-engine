@@ -34,44 +34,56 @@ public class IpGeoLocationClientTest {
 
     @Test
     public void getCountry_whenApiReturnsSuccessReturnsCountry() throws JsonProcessingException {
+        //GIVEN
         server.expect(requestTo("https://ip-api.com/json/1.2.3.4"))
                 .andRespond(withSuccess(apiResponse("success", "GB"), MediaType.APPLICATION_JSON));
 
+        //WHEN
         Optional<String> country = client.getCountryCode("1.2.3.4");
 
+        //THEN
         assertEquals(Optional.of("GB"), country);
         server.verify();
     }
 
     @Test
     public void getCountry_whenApiResponseIsNotSuccessfulReturnsEmpty() throws JsonProcessingException {
+        //GIVEN
         server.expect(requestTo("https://ip-api.com/json/1.2.3.4"))
                 .andRespond(withSuccess(apiResponse("fail", "GB"), MediaType.APPLICATION_JSON));
 
+        //WEHN
         Optional<String> country = client.getCountryCode("1.2.3.4");
 
+        //THEN
         assertTrue(country.isEmpty());
         server.verify();
     }
 
     @Test
     public void getCountry_whenCountryIsBlankReturnsEmpty() throws JsonProcessingException {
+        //GIVEN
         server.expect(requestTo("https://ip-api.com/json/1.2.3.4"))
                 .andRespond(withSuccess(apiResponse("success", " "), MediaType.APPLICATION_JSON));
 
+        //WHEN
         Optional<String> country = client.getCountryCode("1.2.3.4");
 
+        //THEN
         assertTrue(country.isEmpty());
         server.verify();
     }
 
     @Test
     public void getCountry_whenClientThrowsReturnsEmpty() {
+        //GIVEN
         server.expect(requestTo("https://ip-api.com/json/1.2.3.4"))
                 .andRespond(withServerError());
 
+        //WHEN
         Optional<String> country = client.getCountryCode("1.2.3.4");
 
+        //THEN
         assertTrue(country.isEmpty());
         server.verify();
     }

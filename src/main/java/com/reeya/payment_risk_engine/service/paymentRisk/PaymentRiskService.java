@@ -20,6 +20,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Service to manage payment risk assessment and status updates
+ * rule execution is done asynchronously using a thread pool
+ * persistence is done after the risk assessment is complete
+ * Idempotency is achieved by checking if payment exists, or through database constraints if passes inital checks
+ */
 @Service
 public class PaymentRiskService {
 
@@ -37,7 +43,7 @@ public class PaymentRiskService {
             Executor riskRuleExecutor,
             @Value("${payment.risk.decline.threshold:70}") int declineThreshold,
             @Value("${payment.risk.review.threshold:40}") int reviewThreshold,
-            @Value("${payment.risk.review.timout:40}") int timeout
+            @Value("${payment.risk.review.timout:3}") int timeout
     )
     {
         this.entityManager = entityManager;

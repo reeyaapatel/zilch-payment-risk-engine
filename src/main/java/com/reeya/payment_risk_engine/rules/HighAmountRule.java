@@ -9,6 +9,11 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 
+/**
+ * Rule to check amount in payment
+ * -- this currently is implemented as a simple threshold check for demonstration purposes
+ * -- Threshold values are configurable but would need services to be bounced
+ */
 @Component
 public class HighAmountRule implements RiskRule {
 
@@ -23,8 +28,7 @@ public class HighAmountRule implements RiskRule {
             @Value("${high.amount.high.risk.amount:1000}") BigDecimal highRiskAmount,
             @Value("${high.amount.review.risk.amount:500}") BigDecimal reviewRiskAmount,
             @Value("${high.amount.high.risk.score:10}") int highRiskScore,
-            @Value("${high.amount.review.risk.score:5}") int mediumRiskScore
-    )
+            @Value("${high.amount.review.risk.score:5}") int mediumRiskScore)
     {
         this.highRiskAmount = highRiskAmount;
         this.reviewRiskAmount = reviewRiskAmount;
@@ -33,10 +37,11 @@ public class HighAmountRule implements RiskRule {
     }
 
     @Override
-    public RiskRuleResult evaluate(PaymentRiskRequest request) {
+    public RiskRuleResult evaluate(PaymentRiskRequest request)
+    {
 
-        if (request.getAmount().compareTo(highRiskAmount) > 0) {
-
+        if (request.getAmount().compareTo(highRiskAmount) > 0)
+        {
             return RiskRuleResult.builder()
                     .ruleName(RULE_NAME)
                     .score(highRiskScore)
@@ -45,7 +50,8 @@ public class HighAmountRule implements RiskRule {
                     .build();
         }
 
-        else if (request.getAmount().compareTo(reviewRiskAmount) > 0) {
+        else if (request.getAmount().compareTo(reviewRiskAmount) > 0)
+        {
 
             return RiskRuleResult.builder()
                     .ruleName(RULE_NAME)

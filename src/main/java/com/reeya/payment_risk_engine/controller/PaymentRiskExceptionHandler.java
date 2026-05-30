@@ -9,11 +9,15 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.Map;
 
+/**
+ * error handler for the Payment Risk Engine to provide clear error messages
+ */
 @RestControllerAdvice
 public class PaymentRiskExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException exception) {
+    public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException exception)
+    {
         HttpStatus status = exception.getMessage().startsWith("Payment not found")
                 ? HttpStatus.NOT_FOUND
                 : HttpStatus.BAD_REQUEST;
@@ -21,17 +25,20 @@ public class PaymentRiskExceptionHandler {
     }
 
     @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<Map<String, String>> handleIllegalState(IllegalStateException exception) {
+    public ResponseEntity<Map<String, String>> handleIllegalState(IllegalStateException exception)
+    {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", exception.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidation() {
+    public ResponseEntity<Map<String, String>> handleValidation()
+    {
         return ResponseEntity.badRequest().body(Map.of("error", "Invalid request"));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<Map<String, String>> handleUnreadableMessage() {
+    public ResponseEntity<Map<String, String>> handleUnreadableMessage()
+    {
         return ResponseEntity.badRequest().body(Map.of("error", "Invalid request"));
     }
 }

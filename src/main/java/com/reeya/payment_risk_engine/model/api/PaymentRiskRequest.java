@@ -6,7 +6,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 
-
+/**
+ * PaymentRiskRequest for incoming payment risk requests
+ */
 @Data
 @Builder
 @NoArgsConstructor

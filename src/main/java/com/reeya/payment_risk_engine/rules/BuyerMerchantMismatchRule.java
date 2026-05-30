@@ -8,25 +8,34 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
 
-
+/**
+ * Rule used to match buyer and merchant country
+ * --in reality this would be a more complex in its risk determination but has been kept simple for demonstration
+ */
 @AllArgsConstructor
 @Component
-public class BuyerMerchantMismatchRule implements RiskRule{
+public class BuyerMerchantMismatchRule implements RiskRule
+{
 
     public static final String RULE_NAME = "BUYER_MERCHANT_MISMATCH_RULE";
 
     private final IpGeoLocationClient client;
 
     @Override
-    public RiskRuleResult evaluate(PaymentRiskRequest request) {
+    public RiskRuleResult evaluate(PaymentRiskRequest request)
+    {
         boolean countryMatch = client.getCountryCode(request.getBuyerIp())
                 .map(country -> country.equals(request.getMerchantCountryCode()))
                 .orElse(false);
-        if (countryMatch)
-            return new RiskRuleResult(RULE_NAME, 0, RiskLevel.LOW, "Buyer and merchant country match");
-        else
-            return new RiskRuleResult(RULE_NAME, 50, RiskLevel.MEDIUM, "Buyer and merchant country do not match");
 
+        if (countryMatch)
+        {
+            return new RiskRuleResult(RULE_NAME, 0, RiskLevel.LOW, "Buyer and merchant country match");
+        }
+        else
+        {
+            return new RiskRuleResult(RULE_NAME, 50, RiskLevel.MEDIUM, "Buyer and merchant country do not match");
+        }
     }
 
     @Override

@@ -11,6 +11,9 @@ import org.springframework.web.client.RestClientException;
 
 import java.util.Optional;
 
+/**
+ * Client to fetch the country code for a given IP address.
+ */
 @Slf4j
 @Component
 public class IpGeoLocationClient {

@@ -10,13 +10,18 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
+
+/**
+ * PaymentRisk entity for storing payment risk information
+ */
 @Entity
 @Table(name = "PAYMENT_RISK")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PaymentRisk {
+public class PaymentRisk
+{
 
     @Id
     @Column(name = "payment_id", nullable = false, updatable = false)

@@ -7,11 +7,16 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+
+/**
+ * PaymentStatusUpdate for incoming patch status requests
+ */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PaymentStatusUpdate {
+public class PaymentStatusUpdate
+{
 
     @NotNull
     private Status status;

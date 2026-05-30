@@ -8,6 +8,9 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.Executor;
 
+/**
+ * Config for the risk rule executor to add parallelism to the risk rule execution
+ */
 @Configuration
 public class RiskRuleExecutorConfig {
 
@@ -20,13 +23,15 @@ public class RiskRuleExecutorConfig {
     @Value("${risk.rule.executor.queue.capacity:50}")
     private int queueCapacity;
 
+    private final String THREAD_PREFIX = "risk-rule-";
+
     @Bean
     public Executor riskRuleExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(corePoolSize);
         executor.setMaxPoolSize(maxPoolSize);
         executor.setQueueCapacity(queueCapacity);
-        executor.setThreadNamePrefix("risk-rule-");
+        executor.setThreadNamePrefix(THREAD_PREFIX);
         executor.initialize();
         return executor;
     }

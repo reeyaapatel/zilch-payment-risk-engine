@@ -7,6 +7,9 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Enpoints for the Payment Risk Engine
+ */
 @RestController
 @RequestMapping("/payments")
 public class PaymentRiskController {

@@ -54,11 +54,11 @@ public class HighAmountRuleTest {
     private PaymentRiskRequest paymentRiskRequest(BigDecimal amount) {
         return PaymentRiskRequest.builder()
                 .paymentId("payment-001")
-                .customerId("customer-001")
+                .customerId("CUSTOMER-001")
                 .businessDate(LocalDate.parse("2026-05-30"))
                 .amount(amount)
                 .currency("USD")
-                .merchantName("Test Merchant")
+                .merchantName("ASOS")
                 .merchantCountryCode("US")
                 .buyerIp("127.0.0.1")
                 .build();

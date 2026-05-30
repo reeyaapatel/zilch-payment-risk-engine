@@ -29,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(PaymentRiskController.class)
-class PaymentRiskControllerTest {
+public class PaymentRiskControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -42,7 +42,7 @@ class PaymentRiskControllerTest {
     private PaymentRiskService paymentRiskService;
 
     @Test
-    void assessRisk_shouldReturnCreatedPaymentRiskResponse() throws Exception {
+    public void assessRisk_shouldReturnCreatedPaymentRiskResponse() throws Exception {
         //GIVEN
         PaymentRiskRequest request = paymentRiskRequest();
         Mockito.when(paymentRiskService.assessRisk(Mockito.any(PaymentRiskRequest.class)))
@@ -71,7 +71,7 @@ class PaymentRiskControllerTest {
     }
 
     @Test
-    void assessRisk_whenRequestIsInvalidShouldReturnBadRequest() throws Exception {
+    public void assessRisk_whenRequestIsInvalidShouldReturnBadRequest() throws Exception {
         //GIVEN
         PaymentRiskRequest request = PaymentRiskRequest.builder()
                 .paymentId("")
@@ -95,7 +95,7 @@ class PaymentRiskControllerTest {
     }
 
     @Test
-    void getPayment_shouldReturnPaymentRiskResponse() throws Exception {
+    public void getPayment_shouldReturnPaymentRiskResponse() throws Exception {
         //GIVEN
         PaymentRiskRequest request = paymentRiskRequest();
         Mockito.when(paymentRiskService.getPaymentRiskResponse("PAY-001")).thenReturn(paymentRiskResponse(request));
@@ -115,7 +115,7 @@ class PaymentRiskControllerTest {
     }
 
     @Test
-    void updateStatus_shouldReturnUpdatedPaymentRiskResponse() throws Exception {
+    public void updateStatus_shouldReturnUpdatedPaymentRiskResponse() throws Exception {
         //GIVEN
         PaymentRiskRequest request = paymentRiskRequest();
         PaymentStatusUpdate update = PaymentStatusUpdate.builder()
@@ -138,7 +138,7 @@ class PaymentRiskControllerTest {
     }
 
     @Test
-    void getPayment_whenPaymentDoesNotExistShouldReturnNotFound() throws Exception {
+    public void getPayment_whenPaymentDoesNotExistShouldReturnNotFound() throws Exception {
         //GIVEN
         Mockito.when(paymentRiskService.getPaymentRiskResponse("missing-id"))
                 .thenThrow(new IllegalArgumentException("Payment not found: missing-id"));
@@ -153,7 +153,7 @@ class PaymentRiskControllerTest {
     }
 
     @Test
-    void updateStatus_whenPaymentDoesNotRequireReviewShouldReturnConflict() throws Exception {
+    public void updateStatus_whenPaymentDoesNotRequireReviewShouldReturnConflict() throws Exception {
         // GIVEN
         PaymentStatusUpdate update = PaymentStatusUpdate.builder()
                 .status(Status.APPROVED)
@@ -175,7 +175,7 @@ class PaymentRiskControllerTest {
     
 
     @Test
-    void updateStatus_whenRequestIsInvalidShouldReturnBadRequest() throws Exception {
+    public void updateStatus_whenRequestIsInvalidShouldReturnBadRequest() throws Exception {
 
         //GIVEN
         PaymentStatusUpdate update = PaymentStatusUpdate.builder()
@@ -193,7 +193,7 @@ class PaymentRiskControllerTest {
     }
 
     @Test
-    void updateStatus_whenStatusIsInvalidEnumShouldReturnBadRequest() throws Exception {
+    public void updateStatus_whenStatusIsInvalidEnumShouldReturnBadRequest() throws Exception {
         Map<String, String> request = Map.of("status", "notvalidstatusforenum");
 
         mockMvc.perform(patch("/payments/PAY-001/status")

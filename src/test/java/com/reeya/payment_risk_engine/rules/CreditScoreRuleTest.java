@@ -1,9 +1,9 @@
 package com.reeya.payment_risk_engine.rules;
 
-import com.reeya.payment_risk_engine.client.IpGeoLocationClient;
 import com.reeya.payment_risk_engine.model.RiskLevel;
 import com.reeya.payment_risk_engine.model.RiskRuleResult;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
+import com.reeya.payment_risk_engine.service.credit.CreditScoreService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -15,55 +15,55 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MockitoExtension.class)
-public class BuyerMerchantMismatchRuleTest {
+public class CreditScoreRuleTest {
 
     @Mock
-    private IpGeoLocationClient ipGeoLocationClient;
+    private CreditScoreService creditScoreService;
 
-    private BuyerMerchantMismatchRule rule;
+    private CreditScoreRule creditScoreRule;
 
     @BeforeEach
     public void setUp() {
-        rule = new BuyerMerchantMismatchRule(ipGeoLocationClient);
+        creditScoreRule = new CreditScoreRule(creditScoreService, 500, 650);
     }
 
     @ParameterizedTest
-    @MethodSource("buyerMerchantCases")
+    @MethodSource("creditScoreCases")
     public void evaluate_shouldReturnExpectedRisk(
-            Optional<String> buyerCountryCode,
-            String merchantCountryCode,
+            int creditScore,
             int expectedScore,
             RiskLevel expectedRiskLevel,
             String expectedReason
     ) {
-        PaymentRiskRequest request = paymentRiskRequest(merchantCountryCode);
-        Mockito.when(ipGeoLocationClient.getCountryCode("1.2.3.4")).thenReturn(buyerCountryCode);
+        PaymentRiskRequest request = paymentRiskRequest();
+        Mockito.when(creditScoreService.getCreditScore("CUSTOMER-001", LocalDate.parse("2026-05-30")))
+                .thenReturn(creditScore);
 
-        RiskRuleResult result = rule.evaluate(request);
+        RiskRuleResult result = creditScoreRule.evaluate(request);
 
-        assertEquals("BUYER_MERCHANT_MISMATCH_RULE", result.getRuleName());
+        assertEquals("CREDIT_SCORE_CHECK", result.getRuleName());
         assertEquals(expectedScore, result.getScore());
         assertEquals(expectedRiskLevel, result.getRiskLevel());
         assertEquals(expectedReason, result.getReason());
-        Mockito.verify(ipGeoLocationClient).getCountryCode("1.2.3.4");
-        Mockito.verifyNoMoreInteractions(ipGeoLocationClient);
+        Mockito.verify(creditScoreService).getCreditScore("CUSTOMER-001", LocalDate.parse("2026-05-30"));
+        Mockito.verifyNoMoreInteractions(creditScoreService);
     }
 
-    private static Stream<Arguments> buyerMerchantCases() {
+    private static Stream<Arguments> creditScoreCases() {
         return Stream.of(
-                Arguments.of(Optional.of("GB"), "GB", 0, RiskLevel.LOW, "Buyer and merchant country match"),
-                Arguments.of(Optional.of("US"), "GB", 50, RiskLevel.MEDIUM, "Buyer and merchant country do not match"),
-                Arguments.of(Optional.empty(), "GB", 50, RiskLevel.MEDIUM, "Buyer and merchant country do not match")
+                Arguments.of(499, 50, RiskLevel.HIGH, "Credit score is high risk"),
+                Arguments.of(500, 20, RiskLevel.MEDIUM, "Credit score is medium risk"),
+                Arguments.of(649, 20, RiskLevel.MEDIUM, "Credit score is medium risk"),
+                Arguments.of(650, 0, RiskLevel.LOW, "Credit score is low risk")
         );
     }
 
-    private PaymentRiskRequest paymentRiskRequest(String merchantCountryCode) {
+    private PaymentRiskRequest paymentRiskRequest() {
         return PaymentRiskRequest.builder()
                 .paymentId("PAY-001")
                 .customerId("CUSTOMER-001")
@@ -71,7 +71,7 @@ public class BuyerMerchantMismatchRuleTest {
                 .amount(BigDecimal.valueOf(100))
                 .currency("GBP")
                 .merchantName("ASOS")
-                .merchantCountryCode(merchantCountryCode)
+                .merchantCountryCode("GB")
                 .buyerIp("1.2.3.4")
                 .build();
     }

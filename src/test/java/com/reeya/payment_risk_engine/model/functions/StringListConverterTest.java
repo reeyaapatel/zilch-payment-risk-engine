@@ -8,18 +8,18 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-class StringListConverterTest {
+public class StringListConverterTest {
 
     private StringListConverter converter;
 
     @BeforeEach
-    void setUp()
+    public void setUp()
     {
         converter = new StringListConverter();
     }
 
     @Test
-    void convertToDatabaseColumn_whenAttributeHasValues()
+    public void convertToDatabaseColumn_whenAttributeHasValues()
     {
         String result = converter.convertToDatabaseColumn(List.of("Low risk", "IP mismatch"));
 
@@ -27,7 +27,7 @@ class StringListConverterTest {
     }
 
     @Test
-    void convertToDatabaseColumn_whenAttributeIsNull()
+    public void convertToDatabaseColumn_whenAttributeIsNull()
     {
         String result = converter.convertToDatabaseColumn(null);
 
@@ -35,7 +35,7 @@ class StringListConverterTest {
     }
 
     @Test
-    void convertToEntityAttribute_whenDatabaseValueHasValues()
+    public void convertToEntityAttribute_whenDatabaseValueHasValues()
     {
         List<String> result = converter.convertToEntityAttribute("Low risk;IP mismatch");
 
@@ -43,7 +43,7 @@ class StringListConverterTest {
     }
 
     @Test
-    void convertToEntityAttribute_whenDatabaseValueIsNull()
+    public void convertToEntityAttribute_whenDatabaseValueIsNull()
     {
         List<String> result = converter.convertToEntityAttribute(null);
 

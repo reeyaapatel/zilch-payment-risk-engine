@@ -3,6 +3,10 @@ package com.reeya.payment_risk_engine.model;
 
 import lombok.*;
 
+
+/**
+ * ouput from risk rules
+ */
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
