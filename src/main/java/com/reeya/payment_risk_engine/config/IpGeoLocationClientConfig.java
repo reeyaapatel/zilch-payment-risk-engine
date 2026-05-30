@@ -13,6 +13,6 @@ public class IpGeoLocationClientConfig {
     @Bean
     public RestClient ipGeoLocationRestClient()
     {
-        return RestClient.builder().baseUrl("https://ip-api.com/json/").build();
+        return RestClient.builder().baseUrl("http://ip-api.com/json/").build();
     }
 }

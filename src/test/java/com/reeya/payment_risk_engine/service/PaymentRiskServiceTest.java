@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
@@ -53,8 +54,9 @@ public class PaymentRiskServiceTest {
         paymentRiskService = new PaymentRiskService(entityManager, Arrays.asList(riskRule1, riskRule2));
         paymentRiskRequest = PaymentRiskRequest.builder()
                 .paymentId("PAY-001")
+                .businessDate(LocalDate.parse("2026-05-30"))
                 .amount(new BigDecimal(100))
-                .merchantCountry("UK")
+                .merchantCountryCode("UK")
                 .merchantName("MARKS&SPENCER")
                 .currency("GBP")
                 .buyerIp("1.2.3.4")
@@ -365,10 +367,11 @@ public class PaymentRiskServiceTest {
     private void assertSavedPayment(PaymentRisk savedPayment, int expectedRiskScore, Status expectedStatus) {
         assertEquals("PAY-001", savedPayment.getPaymentId());
         assertEquals(1, savedPayment.getVersion());
+        assertEquals(LocalDate.parse("2026-05-30"), savedPayment.getBusinessDate());
         assertEquals(BigDecimal.valueOf(100), savedPayment.getAmount());
         assertEquals("GBP", savedPayment.getCurrency());
         assertEquals("MARKS&SPENCER", savedPayment.getMerchantName());
-        assertEquals("UK", savedPayment.getMerchantCountry());
+        assertEquals("UK", savedPayment.getMerchantCountryCode());
         assertEquals("1.2.3.4", savedPayment.getBuyerIp());
         assertEquals(expectedRiskScore, savedPayment.getRiskScore());
         assertEquals(expectedStatus, savedPayment.getStatus());
@@ -380,10 +383,11 @@ public class PaymentRiskServiceTest {
     private void assertResponse(PaymentRiskResponse response, int expectedRiskScore, Status expectedStatus) {
         assertEquals("PAY-001", response.getPaymentId());
         assertEquals(1, response.getVersion());
+        assertEquals(LocalDate.parse("2026-05-30"), response.getBusinessDate());
         assertEquals(BigDecimal.valueOf(100), response.getAmount());
         assertEquals("GBP", response.getCurrency());
         assertEquals("MARKS&SPENCER", response.getMerchantName());
-        assertEquals("UK", response.getMerchantCountry());
+        assertEquals("UK", response.getMerchantCountryCode());
         assertEquals("1.2.3.4", response.getBuyerIp());
         assertEquals(expectedRiskScore, response.getRiskScore());
         assertEquals(expectedStatus, response.getStatus());
@@ -398,12 +402,13 @@ public class PaymentRiskServiceTest {
         assertEquals(expectedRiskScore, response.getRiskScore());
         assertEquals(expectedStatus, response.getStatus());
         assertEquals(expectedReasons, response.getReasons());
+        assertEquals(LocalDate.parse("2026-05-30"), response.getBusinessDate());
         assertEquals(Instant.parse("2026-05-29T10:15:30Z"), response.getCreatedAt());
         assertEquals(Instant.parse("2026-05-29T10:15:30Z"), response.getLastUpdatedAt());
         assertEquals(BigDecimal.valueOf(100), response.getAmount());
         assertEquals("GBP", response.getCurrency());
         assertEquals("MARKS&SPENCER", response.getMerchantName());
-        assertEquals("UK", response.getMerchantCountry());
+        assertEquals("UK", response.getMerchantCountryCode());
         assertEquals("1.2.3.4", response.getBuyerIp());
     }
 
@@ -411,10 +416,11 @@ public class PaymentRiskServiceTest {
         return PaymentRisk.builder()
                 .paymentId("PAY-001")
                 .version(1)
+                .businessDate(LocalDate.parse("2026-05-30"))
                 .amount(BigDecimal.valueOf(100))
                 .currency("GBP")
                 .merchantName("MARKS&SPENCER")
-                .merchantCountry("UK")
+                .merchantCountryCode("UK")
                 .buyerIp("1.2.3.4")
                 .riskScore(riskScore)
                 .status(status)

@@ -24,7 +24,7 @@ public class IpGeoLocationClient {
         this.ipGeoLocationClient = ipGeoLocationClient;
     }
 
-    public Optional<String> getCountry(String ipAddress) {
+    public Optional<String> getCountryCode(String ipAddress) {
 
         try {
             IpGeoLocationResponse response = ipGeoLocationClient.get()
@@ -33,15 +33,16 @@ public class IpGeoLocationClient {
                     .body(IpGeoLocationResponse.class);
 
             if (response == null
-                    || !SUCCESS.equalsIgnoreCase(response.getSuccess())
-                    || !StringUtils.hasText(response.getCountry())) {
+                    || !SUCCESS.equalsIgnoreCase(response.getStatus())
+                    || !StringUtils.hasText(response.getCountryCode())) {
                 return Optional.empty();
             }
 
-            return Optional.of(response.getCountry());
+            return Optional.of(response.getCountryCode());
 
         } catch (RestClientException e)
         {
+            log.error("Error fetching IP geolocation data: " + e.getMessage(), e);
             return Optional.empty();
         }
     }

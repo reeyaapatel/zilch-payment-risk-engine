@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -18,10 +19,11 @@ public class PaymentRiskResponse {
 
     private String paymentId;
     private Integer version;
+    private LocalDate businessDate;
     private BigDecimal amount;
     private String currency;
     private String merchantName;
-    private String merchantCountry;
+    private String merchantCountryCode;
     private String buyerIp;
     private Integer riskScore;
     private Status status;

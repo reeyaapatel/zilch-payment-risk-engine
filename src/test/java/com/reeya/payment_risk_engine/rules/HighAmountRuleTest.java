@@ -9,6 +9,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -53,10 +54,11 @@ public class HighAmountRuleTest {
     private PaymentRiskRequest paymentRiskRequest(BigDecimal amount) {
         return PaymentRiskRequest.builder()
                 .paymentId("payment-001")
+                .businessDate(LocalDate.parse("2026-05-30"))
                 .amount(amount)
                 .currency("USD")
                 .merchantName("Test Merchant")
-                .merchantCountry("US")
+                .merchantCountryCode("US")
                 .buyerIp("127.0.0.1")
                 .build();
     }

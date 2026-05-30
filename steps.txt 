@@ -16,18 +16,17 @@ curl -X POST http://localhost:8080/payments/risk \
   -H "Content-Type: application/json" \
   -d '{
     "paymentId": "PAY123",
+    "businessDate": "2026-05-30",
     "amount": 100.00,
     "currency": "GBP",
-    "country": "GB",
     "merchantName": "ASOS",
-    "merchantCountry": "IRELAND",
-    "buyerIp": "1.0.0.1",
-    "buyerCountry": "UK"
+    "merchantCountryCode": "GB",
+    "buyerIp": "45.148.13.48"
   }'
 
 
-
-
   NOTES:
+  --input validation
+  -- sql injection protection
       -- add observabilty and tracing tools to time rsik calcaulatiosn
   -- merchant country would be looked up internally in the db - this is out of scope so comes in via the request

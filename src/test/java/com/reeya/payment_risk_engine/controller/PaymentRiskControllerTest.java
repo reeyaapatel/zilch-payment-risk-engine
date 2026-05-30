@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -31,8 +32,7 @@ class PaymentRiskControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
+    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     @MockitoBean
     private PaymentRiskService paymentRiskService;
@@ -55,9 +55,10 @@ class PaymentRiskControllerTest {
                 .andExpect(jsonPath("$.reasons[0]").value("Low risk"))
                 .andExpect(jsonPath("$.reasons[1]").value("IP mismatch"))
                 .andExpect(jsonPath("$.amount").value(100))
+                .andExpect(jsonPath("$.businessDate").value("2026-05-30"))
                 .andExpect(jsonPath("$.currency").value("GBP"))
                 .andExpect(jsonPath("$.merchantName").value("MARKS&SPENCER"))
-                .andExpect(jsonPath("$.merchantCountry").value("UK"))
+                .andExpect(jsonPath("$.merchantCountryCode").value("UK"))
                 .andExpect(jsonPath("$.buyerIp").value("1.2.3.4"));
 
         Mockito.verify(paymentRiskService).assessRisk(Mockito.any(PaymentRiskRequest.class));
@@ -69,10 +70,11 @@ class PaymentRiskControllerTest {
         //GIVEN
         PaymentRiskRequest request = PaymentRiskRequest.builder()
                 .paymentId("")
+                .businessDate(LocalDate.parse("2026-05-30"))
                 .amount(BigDecimal.ZERO)
                 .currency("") //-- IS BLANK
                 .merchantName("MARKS&SPENCER")
-                .merchantCountry("UK")
+                .merchantCountryCode("UK")
                 .buyerIp("1.2.3.4")
                 .build();
 
@@ -201,10 +203,11 @@ class PaymentRiskControllerTest {
     private PaymentRiskRequest paymentRiskRequest() {
         return PaymentRiskRequest.builder()
                 .paymentId("PAY-001")
+                .businessDate(LocalDate.parse("2026-05-30"))
                 .amount(BigDecimal.valueOf(100))
                 .currency("GBP")
                 .merchantName("MARKS&SPENCER")
-                .merchantCountry("UK")
+                .merchantCountryCode("UK")
                 .buyerIp("1.2.3.4")
                 .build();
     }
@@ -216,10 +219,11 @@ class PaymentRiskControllerTest {
     private PaymentRiskResponse paymentRiskResponse(PaymentRiskRequest request, Status status) {
         return PaymentRiskResponse.builder()
                 .paymentId("PAY-001")
+                .businessDate(request.getBusinessDate())
                 .amount(request.getAmount())
                 .currency(request.getCurrency())
                 .merchantName(request.getMerchantName())
-                .merchantCountry(request.getMerchantCountry())
+                .merchantCountryCode(request.getMerchantCountryCode())
                 .buyerIp(request.getBuyerIp())
                 .riskScore(101)
                 .status(status)

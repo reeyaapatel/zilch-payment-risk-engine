@@ -10,7 +10,7 @@ import lombok.Setter;
 @Setter
 public class IpGeoLocationResponse {
 
-    private String success;
-    private String country;
+    private String status;
+    private String countryCode;
 
 }

@@ -1,11 +1,9 @@
 package com.reeya.payment_risk_engine.model.api;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 
 
@@ -21,6 +19,9 @@ public class PaymentRiskRequest
     private String paymentId;
 
     @NotNull
+    private LocalDate businessDate;
+
+    @NotNull
     @Positive
     private BigDecimal amount;
 
@@ -31,7 +32,10 @@ public class PaymentRiskRequest
     private String merchantName;
 
     @NotBlank
-    private String merchantCountry;
+    @Size(min = 2, max = 2)
+    @Pattern(regexp = "^[A-Z]{2,3}$", message = "ISO country code required")
+    @NotBlank
+    private String merchantCountryCode;
 
     @NotBlank
     @Pattern(

@@ -19,7 +19,7 @@ public class BuyerMerchantMismatchRule implements RiskRule{
 
     @Override
     public RiskRuleResult evaluate(PaymentRiskRequest request) {
-        boolean countryMatch = client.getCountry(request.getBuyerIp()).map(country -> country.equals(request.getMerchantCountry())).orElse(false);
+        boolean countryMatch = client.getCountryCode(request.getBuyerIp()).map(country -> country.equals(request.getMerchantCountryCode())).orElse(false);
         if (countryMatch)
             return new RiskRuleResult(RULE_NAME, 0, RiskLevel.LOW, "Buyer and merchant country match");
         else

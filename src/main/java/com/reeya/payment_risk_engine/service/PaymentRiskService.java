@@ -59,17 +59,17 @@ public class PaymentRiskService {
             throw new IllegalArgumentException("Payment id is required");
         }
 
-        PaymentRisk assessment = getPaymentRiskOrThrow(paymentId);
-        if (assessment.getStatus() != Status.REQUIRES_REVIEW)
+        PaymentRisk paymentRisk = getPaymentRiskOrThrow(paymentId);
+        if (paymentRisk.getStatus() != Status.REQUIRES_REVIEW)
         {
             throw new IllegalStateException("Payment status can only be updated when it requires review");
         }
 
-        assessment.setStatus(update.getStatus());
-        assessment.setLastUpdatedAt(Instant.now());
+        paymentRisk.setStatus(update.getStatus());
+        paymentRisk.setLastUpdatedAt(Instant.now());
         entityManager.flush();
 
-        return toResponse(assessment);
+        return toResponse(paymentRisk);
     }
 
     public PaymentRiskResponse getPaymentRiskResponse(String paymentId)
@@ -96,9 +96,10 @@ public class PaymentRiskService {
         Instant now = Instant.now();
         return PaymentRisk.builder()
                 .paymentId(request.getPaymentId())
+                .businessDate(request.getBusinessDate())
                 .amount(request.getAmount())
                 .currency(request.getCurrency())
-                .merchantCountry(request.getMerchantCountry())
+                .merchantCountryCode(request.getMerchantCountryCode())
                 .merchantName(request.getMerchantName())
                 .buyerIp(request.getBuyerIp())
                 .status(determineDecision(riskScore))
@@ -109,20 +110,21 @@ public class PaymentRiskService {
                 .build();
     }
 
-    private PaymentRiskResponse toResponse(PaymentRisk assessment) {
+    private PaymentRiskResponse toResponse(PaymentRisk paymentRisk) {
         return PaymentRiskResponse.builder()
-                .paymentId(assessment.getPaymentId())
-                .version(assessment.getVersion())
-                .amount(assessment.getAmount())
-                .currency(assessment.getCurrency())
-                .merchantName(assessment.getMerchantName())
-                .merchantCountry(assessment.getMerchantCountry())
-                .buyerIp(assessment.getBuyerIp())
-                .riskScore(assessment.getRiskScore())
-                .status(assessment.getStatus())
-                .reasons(assessment.getReasons())
-                .createdAt(assessment.getCreatedAt())
-                .lastUpdatedAt(assessment.getLastUpdatedAt())
+                .paymentId(paymentRisk.getPaymentId())
+                .version(paymentRisk.getVersion())
+                .businessDate(paymentRisk.getBusinessDate())
+                .amount(paymentRisk.getAmount())
+                .currency(paymentRisk.getCurrency())
+                .merchantName(paymentRisk.getMerchantName())
+                .merchantCountryCode(paymentRisk.getMerchantCountryCode())
+                .buyerIp(paymentRisk.getBuyerIp())
+                .riskScore(paymentRisk.getRiskScore())
+                .status(paymentRisk.getStatus())
+                .reasons(paymentRisk.getReasons())
+                .createdAt(paymentRisk.getCreatedAt())
+                .lastUpdatedAt(paymentRisk.getLastUpdatedAt())
                 .build();
     }
 

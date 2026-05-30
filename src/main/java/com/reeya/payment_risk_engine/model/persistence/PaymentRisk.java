@@ -7,6 +7,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 @Entity
@@ -26,6 +27,9 @@ public class PaymentRisk {
     @Builder.Default
     private Integer version = 1;
 
+    @Column(name = "business_date", nullable = false, updatable = false)
+    private LocalDate businessDate;
+
     @Column(name = "amount", nullable = false, updatable = false)
     private BigDecimal amount;
 
@@ -35,8 +39,8 @@ public class PaymentRisk {
     @Column(name = "merchant_name", nullable = false, updatable = false)
     private String merchantName;
 
-    @Column(name = "merchant_country", nullable = false, updatable = false)
-    private String merchantCountry;
+    @Column(name = "merchant_country_code", nullable = false, updatable = false)
+    private String merchantCountryCode;
 
     @Column(name = "buyer_ip", nullable = false, updatable = false)
     private String buyerIp;
