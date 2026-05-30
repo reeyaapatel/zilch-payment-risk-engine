@@ -27,6 +27,9 @@ public class PaymentRisk {
     @Builder.Default
     private Integer version = 1;
 
+    @Column(name = "customer_id", nullable = false, updatable = false)
+    private String customerId;
+
     @Column(name = "business_date", nullable = false, updatable = false)
     private LocalDate businessDate;
 

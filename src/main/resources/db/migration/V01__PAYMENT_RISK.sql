@@ -2,6 +2,7 @@ CREATE TABLE PAYMENT_RISK
 (
     payment_id       VARCHAR(30) NOT NULL,
     version          INT NOT NULL,
+    customer_id      VARCHAR(50) NOT NULL,
     business_date    DATE NOT NULL,
     amount           DECIMAL NOT NULL,
     currency         VARCHAR(3) NOT NULL,

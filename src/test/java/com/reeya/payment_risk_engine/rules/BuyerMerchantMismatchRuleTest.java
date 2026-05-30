@@ -77,6 +77,7 @@ class BuyerMerchantMismatchRuleTest {
     private PaymentRiskRequest paymentRiskRequest(String merchantCountryCode) {
         return PaymentRiskRequest.builder()
                 .paymentId("PAY-001")
+                .customerId("CUSTOMER-001")
                 .businessDate(LocalDate.parse("2026-05-30"))
                 .amount(BigDecimal.valueOf(100))
                 .currency("GBP")

@@ -11,21 +11,32 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
 public class PaymentRiskService {
 
+    @Value("${payment.risk.deline.threshold:70}")
+    int delineThreshold;
+
+    @Value("${payment.risk.review.threshold:40}")
+    int reviewThreshold;
 
     @PersistenceContext
     private final EntityManager entityManager;
 
     private final List<RiskRule> riskRules;
+    private final Executor riskRuleExecutor;
 
     @Transactional
     public PaymentRiskResponse assessRisk(PaymentRiskRequest request) {
@@ -87,8 +98,22 @@ public class PaymentRiskService {
     }
 
     private List<RiskRuleResult> evaluateRules(PaymentRiskRequest request) {
-        return riskRules.stream()
-                .map(rule -> rule.evaluate(request))
+        List<CompletableFuture<RiskRuleResult>> ruleEvaluations = riskRules.stream()
+                .map(rule -> CompletableFuture
+                        .supplyAsync(() -> rule.evaluate(request), riskRuleExecutor)
+                        .orTimeout(3, TimeUnit.SECONDS)
+                        .exceptionally(exception -> RiskRuleResult.builder()
+                                .ruleName(rule.getRuleName())
+                                .score(reviewThreshold)
+                                .riskLevel(RiskLevel.HIGH)
+                                .reason("Rule failed or timed out")
+                                .build()
+                        )
+                )
+                .toList();
+
+        return ruleEvaluations.stream()
+                .map(CompletableFuture::join)
                 .toList();
     }
 
@@ -96,6 +121,7 @@ public class PaymentRiskService {
         Instant now = Instant.now();
         return PaymentRisk.builder()
                 .paymentId(request.getPaymentId())
+                .customerId(request.getCustomerId())
                 .businessDate(request.getBusinessDate())
                 .amount(request.getAmount())
                 .currency(request.getCurrency())
@@ -114,6 +140,7 @@ public class PaymentRiskService {
         return PaymentRiskResponse.builder()
                 .paymentId(paymentRisk.getPaymentId())
                 .version(paymentRisk.getVersion())
+                .customerId(paymentRisk.getCustomerId())
                 .businessDate(paymentRisk.getBusinessDate())
                 .amount(paymentRisk.getAmount())
                 .currency(paymentRisk.getCurrency())
@@ -129,10 +156,10 @@ public class PaymentRiskService {
     }
 
     private Status determineDecision(int score) {
-        if (score >= 70) {
+        if (score >= delineThreshold) {
             return Status.DECLINED;
         }
-        if (score >= 40) {
+        if (score >= reviewThreshold) {
             return Status.REQUIRES_REVIEW;
         }
         return Status.APPROVED;

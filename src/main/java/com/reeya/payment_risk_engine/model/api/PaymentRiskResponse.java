@@ -19,6 +19,7 @@ public class PaymentRiskResponse {
 
     private String paymentId;
     private Integer version;
+    private String customerId;
     private LocalDate businessDate;
     private BigDecimal amount;
     private String currency;

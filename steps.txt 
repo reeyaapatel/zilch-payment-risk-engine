@@ -25,8 +25,25 @@ curl -X POST http://localhost:8080/payments/risk \
   }'
 
 
+  --
+  call get: ->
+
+curl -X GET http://localhost:8080/payments/PAY123
+
+--- CALL STATUS UPDATE
+
+curl -X PATCH http://localhost:8080/payments/PAY123/status \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status": "DECLINED"
+  }'
+
+
   NOTES:
   --input validation
   -- sql injection protection
       -- add observabilty and tracing tools to time rsik calcaulatiosn
   -- merchant country would be looked up internally in the db - this is out of scope so comes in via the request
+
+  -- customer id for credit report checks, unsualt account acityry
+  -- more mathematicl risk calculations

@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class BuyerMerchantMismatchRule implements RiskRule{
 
-    private static final String RULE_NAME = "BUYER_MERCHANT_MISMATCH_RULE";
+    public static final String RULE_NAME = "BUYER_MERCHANT_MISMATCH_RULE";
 
     private final IpGeoLocationClient client;
 
@@ -25,5 +25,10 @@ public class BuyerMerchantMismatchRule implements RiskRule{
         else
             return new RiskRuleResult(RULE_NAME, 50, RiskLevel.MEDIUM, "Buyer and merchant country do not match");
 
+    }
+
+    @Override
+    public String getRuleName() {
+        return RULE_NAME;
     }
 }

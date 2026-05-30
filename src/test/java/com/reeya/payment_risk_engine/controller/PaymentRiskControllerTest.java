@@ -1,6 +1,8 @@
 package com.reeya.payment_risk_engine.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskResponse;
 import com.reeya.payment_risk_engine.model.Status;
@@ -32,7 +34,9 @@ class PaymentRiskControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // required for BD serialization
 
     @MockitoBean
     private PaymentRiskService paymentRiskService;
@@ -50,6 +54,7 @@ class PaymentRiskControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.paymentId").value("PAY-001"))
+                .andExpect(jsonPath("$.customerId").value("CUSTOMER-001"))
                 .andExpect(jsonPath("$.riskScore").value(101))
                 .andExpect(jsonPath("$.status").value("DECLINED"))
                 .andExpect(jsonPath("$.reasons[0]").value("Low risk"))
@@ -70,6 +75,7 @@ class PaymentRiskControllerTest {
         //GIVEN
         PaymentRiskRequest request = PaymentRiskRequest.builder()
                 .paymentId("")
+                .customerId("CUSTOMER-001")
                 .businessDate(LocalDate.parse("2026-05-30"))
                 .amount(BigDecimal.ZERO)
                 .currency("") //-- IS BLANK
@@ -203,6 +209,7 @@ class PaymentRiskControllerTest {
     private PaymentRiskRequest paymentRiskRequest() {
         return PaymentRiskRequest.builder()
                 .paymentId("PAY-001")
+                .customerId("CUSTOMER-001")
                 .businessDate(LocalDate.parse("2026-05-30"))
                 .amount(BigDecimal.valueOf(100))
                 .currency("GBP")
@@ -219,6 +226,7 @@ class PaymentRiskControllerTest {
     private PaymentRiskResponse paymentRiskResponse(PaymentRiskRequest request, Status status) {
         return PaymentRiskResponse.builder()
                 .paymentId("PAY-001")
+                .customerId(request.getCustomerId())
                 .businessDate(request.getBusinessDate())
                 .amount(request.getAmount())
                 .currency(request.getCurrency())

@@ -18,6 +18,9 @@ public class PaymentRiskRequest
     @NotBlank
     private String paymentId;
 
+    @NotBlank
+    private String customerId;
+
     @NotNull
     private LocalDate businessDate;
 

@@ -17,12 +17,14 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Executor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -47,13 +49,17 @@ public class PaymentRiskServiceTest {
     private PaymentRiskRequest paymentRiskRequest;
 
     private final List<String> expectedReasons = List.of("Low risk", "IP mismatch");
+    private final Executor directExecutor = Runnable::run;
 
     @BeforeEach
     public void setUp() {
 
-        paymentRiskService = new PaymentRiskService(entityManager, Arrays.asList(riskRule1, riskRule2));
+        paymentRiskService = new PaymentRiskService(entityManager, Arrays.asList(riskRule1, riskRule2), directExecutor);
+        ReflectionTestUtils.setField(paymentRiskService, "delineThreshold", 70);
+        ReflectionTestUtils.setField(paymentRiskService, "reviewThreshold",40);
         paymentRiskRequest = PaymentRiskRequest.builder()
                 .paymentId("PAY-001")
+                .customerId("CUSTOMER-001")
                 .businessDate(LocalDate.parse("2026-05-30"))
                 .amount(new BigDecimal(100))
                 .merchantCountryCode("UK")
@@ -206,6 +212,34 @@ public class PaymentRiskServiceTest {
         Mockito.verify(entityManager).flush();
         Mockito.verify(entityManager, Mockito.times(2)).find(PaymentRisk.class, "PAY-001");
         verifyRuleCalls();
+    }
+
+    @Test
+    public void assessRisk_whenRuleFailsUsesHighRiskFallbackResult() {
+        //GIVEN
+        Mockito.when(riskRule1.evaluate(paymentRiskRequest))
+                .thenThrow(new IllegalStateException("Rule failed"));
+        Mockito.when(riskRule1.getRuleName()).thenReturn("BROKEN_RULE");
+        Mockito.when(riskRule2.evaluate(paymentRiskRequest))
+                .thenReturn(ruleResult("IP_CHECK", 1, RiskLevel.LOW, "IP matched"));
+
+        //WHEN
+        PaymentRiskResponse response = paymentRiskService.assessRisk(paymentRiskRequest);
+
+        //THEN
+        PaymentRisk savedPayment = verifySavedPayment();
+        assertEquals(41, savedPayment.getRiskScore());
+        assertEquals(Status.REQUIRES_REVIEW, savedPayment.getStatus());
+        assertEquals(List.of("Rule failed or timed out", "IP matched"), savedPayment.getReasons());
+        assertEquals(41, response.getRiskScore());
+        assertEquals(Status.REQUIRES_REVIEW, response.getStatus());
+        assertEquals(List.of("Rule failed or timed out", "IP matched"), response.getReasons());
+        verifyPaymentLookup();
+        Mockito.verify(riskRule1).evaluate(paymentRiskRequest);
+        Mockito.verify(riskRule1).getRuleName();
+        Mockito.verify(riskRule2).evaluate(paymentRiskRequest);
+        Mockito.verify(entityManager).flush();
+        Mockito.verifyNoMoreInteractions(entityManager, riskRule1, riskRule2);
     }
 
     @Test
@@ -367,6 +401,7 @@ public class PaymentRiskServiceTest {
     private void assertSavedPayment(PaymentRisk savedPayment, int expectedRiskScore, Status expectedStatus) {
         assertEquals("PAY-001", savedPayment.getPaymentId());
         assertEquals(1, savedPayment.getVersion());
+        assertEquals("CUSTOMER-001", savedPayment.getCustomerId());
         assertEquals(LocalDate.parse("2026-05-30"), savedPayment.getBusinessDate());
         assertEquals(BigDecimal.valueOf(100), savedPayment.getAmount());
         assertEquals("GBP", savedPayment.getCurrency());
@@ -383,6 +418,7 @@ public class PaymentRiskServiceTest {
     private void assertResponse(PaymentRiskResponse response, int expectedRiskScore, Status expectedStatus) {
         assertEquals("PAY-001", response.getPaymentId());
         assertEquals(1, response.getVersion());
+        assertEquals("CUSTOMER-001", response.getCustomerId());
         assertEquals(LocalDate.parse("2026-05-30"), response.getBusinessDate());
         assertEquals(BigDecimal.valueOf(100), response.getAmount());
         assertEquals("GBP", response.getCurrency());
@@ -399,6 +435,7 @@ public class PaymentRiskServiceTest {
     private void assertStoredPaymentResponse(PaymentRiskResponse response, int expectedRiskScore, Status expectedStatus) {
         assertEquals("PAY-001", response.getPaymentId());
         assertEquals(1, response.getVersion());
+        assertEquals("CUSTOMER-001", response.getCustomerId());
         assertEquals(expectedRiskScore, response.getRiskScore());
         assertEquals(expectedStatus, response.getStatus());
         assertEquals(expectedReasons, response.getReasons());
@@ -416,6 +453,7 @@ public class PaymentRiskServiceTest {
         return PaymentRisk.builder()
                 .paymentId("PAY-001")
                 .version(1)
+                .customerId("CUSTOMER-001")
                 .businessDate(LocalDate.parse("2026-05-30"))
                 .amount(BigDecimal.valueOf(100))
                 .currency("GBP")
