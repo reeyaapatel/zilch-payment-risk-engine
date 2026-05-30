@@ -1,4 +1,4 @@
-package com.reeya.payment_risk_engine.service;
+package com.reeya.payment_risk_engine.service.paymentRisk;
 
 import com.reeya.payment_risk_engine.model.*;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
@@ -29,13 +29,15 @@ public class PaymentRiskService {
     private final Executor riskRuleExecutor;
     private final int declineThreshold;
     private final int reviewThreshold;
+    private final int timeout;
 
     public PaymentRiskService(
             EntityManager entityManager,
             List<RiskRule> riskRules,
             Executor riskRuleExecutor,
             @Value("${payment.risk.decline.threshold:70}") int declineThreshold,
-            @Value("${payment.risk.review.threshold:40}") int reviewThreshold
+            @Value("${payment.risk.review.threshold:40}") int reviewThreshold,
+            @Value("${payment.risk.review.timout:40}") int timeout
     )
     {
         this.entityManager = entityManager;
@@ -43,6 +45,7 @@ public class PaymentRiskService {
         this.riskRuleExecutor = riskRuleExecutor;
         this.declineThreshold = declineThreshold;
         this.reviewThreshold = reviewThreshold;
+        this.timeout = timeout;
     }
 
     @Transactional
@@ -108,7 +111,7 @@ public class PaymentRiskService {
         List<CompletableFuture<RiskRuleResult>> ruleEvaluations = riskRules.stream()
                 .map(rule -> CompletableFuture
                         .supplyAsync(() -> rule.evaluate(request), riskRuleExecutor)
-                        .orTimeout(3, TimeUnit.SECONDS)
+                        .orTimeout(timeout, TimeUnit.SECONDS)
                         .exceptionally(exception -> RiskRuleResult.builder()
                                 .ruleName(rule.getRuleName())
                                 .score(reviewThreshold)

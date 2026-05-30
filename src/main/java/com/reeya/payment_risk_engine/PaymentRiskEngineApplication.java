@@ -6,8 +6,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class PaymentRiskEngineApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(PaymentRiskEngineApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(PaymentRiskEngineApplication.class, args);
+    }
 
 }

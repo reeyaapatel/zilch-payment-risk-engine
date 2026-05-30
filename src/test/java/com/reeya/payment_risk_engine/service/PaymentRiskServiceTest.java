@@ -8,6 +8,7 @@ import com.reeya.payment_risk_engine.model.api.PaymentRiskResponse;
 import com.reeya.payment_risk_engine.model.api.PaymentStatusUpdate;
 import com.reeya.payment_risk_engine.model.persistence.PaymentRisk;
 import com.reeya.payment_risk_engine.rules.RiskRule;
+import com.reeya.payment_risk_engine.service.paymentRisk.PaymentRiskService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceException;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,7 +54,7 @@ public class PaymentRiskServiceTest {
     @BeforeEach
     public void setUp() {
 
-        paymentRiskService = new PaymentRiskService(entityManager, Arrays.asList(riskRule1, riskRule2), directExecutor, 70, 40);
+        paymentRiskService = new PaymentRiskService(entityManager, Arrays.asList(riskRule1, riskRule2), directExecutor, 70, 40, 3);
         paymentRiskRequest = PaymentRiskRequest.builder()
                 .paymentId("PAY-001")
                 .customerId("CUSTOMER-001")
