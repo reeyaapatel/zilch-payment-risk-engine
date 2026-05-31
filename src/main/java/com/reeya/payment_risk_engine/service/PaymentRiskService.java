@@ -35,14 +35,21 @@ public class PaymentRiskService {
             @Value("${payment.risk.decline.threshold}") int declineThreshold,
             @Value("${payment.risk.review.threshold}") int reviewThreshold
     ) {
-        this.entityManager = entityManager;
-        this.riskRuleEvaluator = riskRuleEvaluator;
+        if (entityManager == null) {
+            throw new IllegalArgumentException("EntityManager must not be null");
+        }
+        if (riskRuleEvaluator == null) {
+            throw new IllegalArgumentException("RiskRuleEvaluator must not be null");
+        }
         if (declineThreshold < 0 || reviewThreshold < 0) {
             throw new IllegalArgumentException("Thresholds must be non-negative");
         }
         if (reviewThreshold >= declineThreshold) {
             throw new IllegalArgumentException("Review threshold must be lower than decline threshold");
         }
+
+        this.entityManager = entityManager;
+        this.riskRuleEvaluator = riskRuleEvaluator;
         this.declineThreshold = declineThreshold;
         this.reviewThreshold = reviewThreshold;
     }

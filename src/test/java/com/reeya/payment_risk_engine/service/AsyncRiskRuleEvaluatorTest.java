@@ -142,4 +142,40 @@ public class AsyncRiskRuleEvaluatorTest {
         // THEN
         assertEquals("Fallback score must be non-negative and timeout must be positive", exception.getMessage());
     }
+
+    @Test
+    public void constructor_whenRuleListIsEmptyThrowsError() {
+        // WHEN
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new AsyncRiskRuleEvaluator(List.of(), directExecutor, 40, 3)
+        );
+
+        // THEN
+        assertEquals("At least one risk rule must be provided", exception.getMessage());
+    }
+
+    @Test
+    public void constructor_whenRuleListIsNullThrowsError() {
+        // WHEN
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new AsyncRiskRuleEvaluator(null, directExecutor, 40, 3)
+        );
+
+        // THEN
+        assertEquals("At least one risk rule must be provided", exception.getMessage());
+    }
+
+    @Test
+    public void constructor_whenExecutorIsNullThrowsError() {
+        // WHEN
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new AsyncRiskRuleEvaluator(List.of(riskRule1), null, 40, 3)
+        );
+
+        // THEN
+        assertEquals("Risk rule executor must be provided", exception.getMessage());
+    }
 }

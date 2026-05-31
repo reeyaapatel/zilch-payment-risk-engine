@@ -4,6 +4,7 @@ import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
 import com.reeya.payment_risk_engine.model.RiskLevel;
 import com.reeya.payment_risk_engine.model.RiskRuleResult;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -13,6 +14,7 @@ import java.time.LocalDate;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class AmountRuleTest {
 
@@ -34,6 +36,62 @@ public class AmountRuleTest {
         RiskRuleResult result = amountRule.evaluate(request);
 
         assertEquals(expectedResult, result);
+    }
+
+    @Test
+    public void constructor_whenAmountsAreNullThrowsError() {
+        // WHEN
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new AmountRule(null, BigDecimal.valueOf(500), 10, 5)
+        );
+
+        // THEN
+        assertEquals(
+                "Invalid configuration for AmountRule: values must not be null and should be positive",
+                exception.getMessage());
+    }
+
+    @Test
+    public void constructor_whenScoresAreNotPositiveThrowsError() {
+        // WHEN
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new AmountRule(BigDecimal.valueOf(1000), BigDecimal.valueOf(500), 0, 5)
+        );
+
+        // THEN
+        assertEquals(
+                "Invalid configuration for AmountRule: values must not be null and should be positive",
+                exception.getMessage());
+    }
+
+    @Test
+    public void constructor_whenHighRiskAmountIsNotGreaterThanMediumRiskAmountThrowsError() {
+        // WHEN
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new AmountRule(BigDecimal.valueOf(500), BigDecimal.valueOf(500), 10, 5)
+        );
+
+        // THEN
+        assertEquals(
+                "Invalid configuration for AmountRule: high risk amount should be greater than medium risk amount",
+                exception.getMessage());
+    }
+
+    @Test
+    public void constructor_whenHighRiskScoreIsNotGreaterThanMediumRiskScoreThrowsError() {
+        // WHEN
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new AmountRule(BigDecimal.valueOf(1000), BigDecimal.valueOf(500), 5, 5)
+        );
+
+        // THEN
+        assertEquals(
+                "Invalid configuration for AmountRule: high risk score should be higher than medium risk score",
+                exception.getMessage());
     }
 
     private static Stream<Arguments> amountRiskCases() {

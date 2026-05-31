@@ -61,7 +61,7 @@ The thresholds and scoring model are intentionally simple and are intended to de
 
 ### Risk Engine & Business Logic
 
-* Store rule thresholds and configuration in the database rather than application properties.
+* Store rule thresholds and configuration in externally rather than application properties.
 * Add the ability to enable or disable individual risk rules through configuration. This would be useful during releases, incident management, or gradual rule rollouts.
 * Support customer-specific or segment-specific risk thresholds, allowing risk models to be tuned for different customer groups.
 * Enhance the risk scoring model. The current implementation uses simple score aggregation; a production system would likely use weighted scoring per rule
@@ -70,15 +70,17 @@ The thresholds and scoring model are intentionally simple and are intended to de
 
 ### Configuration & Deployment & Monitoring
 
-* Support environment-specific configuration (e.g. DEV, UAT, PROD).
+* Support environment-specific configuration (e.g. DEV, UAT, PROD). Currently, there is just a specific application properties file for dev -> this would not be used for a production system.
 * Implement automatic refresh of configuration values when updated externally, avoiding application restarts.
 * Introduce more structured logging and monitoring to improve operational visibility.
 * Containerize the application to simplify deployment and operational management.
+* Improve error handling with custom exceptions and error responses.
 
 ### Resilience & Performance
 
 * Further optimise the cache strategies for recent payments and all frequently accessed external API responses with appropriate expiration policies.
-* Implement timeout and retry policies for external API calls. The current implementation applies timeouts at the rule execution level; in a production system, individual client calls should also have their own timeout policies.
+* Implement specific timeout and retry policies for external API calls. 
+
 
 ### Security
 
@@ -99,7 +101,7 @@ The thresholds and scoring model are intentionally simple and are intended to de
 ## Run Locally
 
 ```bash
-./mvnw spring-boot:run
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
 File-based H2 database configured in `src/main/resources/application.properties`.

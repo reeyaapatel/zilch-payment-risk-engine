@@ -5,6 +5,7 @@ import com.reeya.payment_risk_engine.model.RiskRuleResult;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
 import com.reeya.payment_risk_engine.service.CreditScoreService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -19,6 +20,7 @@ import java.util.OptionalInt;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(MockitoExtension.class)
 public class CreditScoreRuleTest {
@@ -48,6 +50,62 @@ public class CreditScoreRuleTest {
         assertEquals(expectedResult, result);
         Mockito.verify(creditScoreService).getCreditScore("CUSTOMER-001", LocalDate.parse("2026-05-30"));
         Mockito.verifyNoMoreInteractions(creditScoreService);
+    }
+
+    @Test
+    public void constructor_whenThresholdsAreNotPositiveThrowsError() {
+        // WHEN
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new CreditScoreRule(creditScoreService, 0, 650, 50, 20)
+        );
+
+        // THEN
+        assertEquals(
+                "Invalid Credit score rule configuration: must have positive thresholds and values",
+                exception.getMessage());
+    }
+
+    @Test
+    public void constructor_whenValuesAreNotPositiveThrowsError() {
+        // WHEN
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new CreditScoreRule(creditScoreService, 500, 650, 0, 20)
+        );
+
+        // THEN
+        assertEquals(
+                "Invalid Credit score rule configuration: must have positive thresholds and values",
+                exception.getMessage());
+    }
+
+    @Test
+    public void constructor_whenHighRiskThresholdIsNotLowerThanMediumRiskThresholdThrowsError() {
+        // WHEN
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new CreditScoreRule(creditScoreService, 650, 650, 50, 20)
+        );
+
+        // THEN
+        assertEquals(
+                "Invalid Credit score rule configuration: High risk credit score threshold must be lower than medium risk credit score threshold",
+                exception.getMessage());
+    }
+
+    @Test
+    public void constructor_whenHighRiskValueIsNotGreaterThanMediumRiskValueThrowsError() {
+        // WHEN
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new CreditScoreRule(creditScoreService, 500, 650, 20, 20)
+        );
+
+        // THEN
+        assertEquals(
+                "Invalid Credit score rule configuration: High risk credit score value must be higher than medium risk credit score value",
+                exception.getMessage());
     }
 
     private static Stream<Arguments> creditScoreCases() {

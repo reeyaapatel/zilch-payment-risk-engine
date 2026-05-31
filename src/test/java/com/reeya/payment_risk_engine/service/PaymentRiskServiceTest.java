@@ -359,6 +359,78 @@ public class PaymentRiskServiceTest {
         Mockito.verifyNoInteractions(entityManager, riskRuleEvaluator);
     }
 
+    @Test
+    public void constructor_whenEntityManagerIsNullThrowsError() {
+        // WHEN
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new PaymentRiskService(null, riskRuleEvaluator, 70, 40)
+        );
+
+        // THEN
+        assertEquals("EntityManager must not be null", exception.getMessage());
+    }
+
+    @Test
+    public void constructor_whenRiskRuleEvaluatorIsNullThrowsError() {
+        // WHEN
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new PaymentRiskService(entityManager, null, 70, 40)
+        );
+
+        // THEN
+        assertEquals("RiskRuleEvaluator must not be null", exception.getMessage());
+    }
+
+    @Test
+    public void constructor_whenDeclineThresholdIsNegativeThrowsError() {
+        // WHEN
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new PaymentRiskService(entityManager, riskRuleEvaluator, -1, 40)
+        );
+
+        // THEN
+        assertEquals("Thresholds must be non-negative", exception.getMessage());
+    }
+
+    @Test
+    public void constructor_whenReviewThresholdIsNegativeThrowsError() {
+        // WHEN
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new PaymentRiskService(entityManager, riskRuleEvaluator, 70, -1)
+        );
+
+        // THEN
+        assertEquals("Thresholds must be non-negative", exception.getMessage());
+    }
+
+    @Test
+    public void constructor_whenReviewThresholdIsEqualToDeclineThresholdThrowsError() {
+        // WHEN
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new PaymentRiskService(entityManager, riskRuleEvaluator, 70, 70)
+        );
+
+        // THEN
+        assertEquals("Review threshold must be lower than decline threshold", exception.getMessage());
+    }
+
+    @Test
+    public void constructor_whenReviewThresholdIsGreaterThanDeclineThresholdThrowsError() {
+        // WHEN
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new PaymentRiskService(entityManager, riskRuleEvaluator, 70, 80)
+        );
+
+        // THEN
+        assertEquals("Review threshold must be lower than decline threshold", exception.getMessage());
+    }
+
     private void mockRules(int secondScore, RiskLevel secondRiskLevel) {
         Mockito.when(riskRuleEvaluator.evaluate(paymentRiskRequest))
                 .thenReturn(List.of(
