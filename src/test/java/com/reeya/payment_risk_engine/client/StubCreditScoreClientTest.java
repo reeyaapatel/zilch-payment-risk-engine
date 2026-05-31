@@ -10,15 +10,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class StubCreditScoreClientTest {
 
     @Test
-    public void calculateCreditScore_returnsScoreInExpectedRange()
-    {
-        //GIVEN
+    public void calculateCreditScore_returnsScoreInExpectedRange() {
+        // GIVEN
         StubCreditScoreClient creditScoreClient = new StubCreditScoreClient();
 
-        //WHEN
+        // WHEN
         OptionalInt score = creditScoreClient.calculateCreditScore("CUSTOMER-001", LocalDate.parse("2026-05-30"));
 
-        //THEN
+        // THEN
         assertTrue(score.isPresent());
         assertTrue(score.getAsInt() >= 300);
         assertTrue(score.getAsInt() <= 900);

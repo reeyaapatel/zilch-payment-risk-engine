@@ -10,9 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import java.time.Duration;
 
 /**
- * Credit score cache configuration - in reality this would be a distributed cache like Redis as services
- * are likely to horizonally scaled. The mock global cache is in place for credit score calculations as this can take a long time
- * so caching the results can prevent repeated calls to the credit score service -> improving latency
+ * Credit score cache configuration.
  */
 @Configuration
 public class CreditScoreCacheConfig {
@@ -20,11 +18,10 @@ public class CreditScoreCacheConfig {
     @Bean
     public Cache<CreditScoreCacheKey, Integer> creditScoreCache(
             @Value("${credit.score.cache.maximum-size}") long maximumSize,
-            @Value("${credit.score.cache.expire-after-write-minutes}") long expireAfterWriteMinutes)
-    {
-        if (maximumSize <= 0 || expireAfterWriteMinutes <= 0)
-        {
-            throw new IllegalArgumentException("Invalid Cache configuration: must have positive maximum size and expiration time");
+            @Value("${credit.score.cache.expire-after-write-minutes}") long expireAfterWriteMinutes) {
+        if (maximumSize <= 0 || expireAfterWriteMinutes <= 0) {
+            throw new IllegalArgumentException(
+                    "Invalid Cache configuration: must have positive maximum size and expiration time");
         }
         return Caffeine.newBuilder()
                 .maximumSize(maximumSize)

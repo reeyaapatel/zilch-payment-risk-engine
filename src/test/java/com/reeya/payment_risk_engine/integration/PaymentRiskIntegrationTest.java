@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.OptionalInt;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -37,6 +38,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class PaymentRiskIntegrationTest {
 
     private static final String DATABASE_URL = "jdbc:h2:mem:payment-risk-integration;DB_CLOSE_DELAY=-1";
+    private static final String USERNAME = "admin";
+    private static final String PASSWORD = "password";
 
     @Autowired
     private MockMvc mockMvc;
@@ -71,6 +74,7 @@ public class PaymentRiskIntegrationTest {
         );
 
         mockMvc.perform(post("/payments/risk")
+                        .with(httpBasic(USERNAME, PASSWORD))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -82,13 +86,20 @@ public class PaymentRiskIntegrationTest {
                 .andExpect(jsonPath("$.status").value("APPROVED"))
                 .andExpect(jsonPath("$.reasons", hasSize(3)));
 
-        mockMvc.perform(get("/payments/IT-PAY-001"))
+        mockMvc.perform(get("/payments/IT-PAY-001")
+                        .with(httpBasic(USERNAME, PASSWORD)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.paymentId").value("IT-PAY-001"))
                 .andExpect(jsonPath("$.customerId").value("CUSTOMER-001"))
                 .andExpect(jsonPath("$.businessDate").value("2026-05-30"))
                 .andExpect(jsonPath("$.status").value("APPROVED"))
                 .andExpect(jsonPath("$.reasons", hasSize(3)));
+    }
+
+    @Test
+    public void getPayment_whenAuthenticationIsMissingShouldReturnUnauthorized() throws Exception {
+        mockMvc.perform(get("/payments/IT-PAY-001"))
+                .andExpect(status().isUnauthorized());
     }
 
     public static class DatabaseInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {

@@ -12,9 +12,11 @@ The business logic is intentionally simplified. In a real-world platform, risk d
 * **Persistence** – H2 and Flyway are used to demonstrate persistence and schema versioning. A production system would likely use PostgreSQL.
 * **Caching** – Caffeine is used to cache external API responses and reduce repeated lookups. In a production environment, Redis would be a better choice as services are typically horizontally scaled and cached data may need to be shared across multiple application instances and consumers.
 * **Configuration** – Thresholds, executor settings, and external endpoints are configurable through application properties.
+* **Authentication** – API endpoints are secured with basic authentication. This is just for demo purposes to reflect API should be authenticated. In production, the authentication would be via and API gateway and JWT authentication
 
 ## Process Flow
-High level overview of the payment risk assessment process:
+
+High-level overview of the payment risk assessment process:
 ```text
 API Client
     ↓
@@ -57,7 +59,7 @@ Response
 * Support environment-specific configuration (e.g. DEV, UAT, PROD).
 * Implement automatic refresh of configuration values when updated externally, avoiding application restarts.
 * Introduce more structured logging and monitoring to improve operational visibility.
-* Containerise the application to simplify deployment and operational management.
+* Containerize the application to simplify deployment and operational management.
 
 ### Resilience & Performance
 
@@ -66,7 +68,7 @@ Response
 
 ### Security
 
-* Add authentication and authorisation to secure API endpoints and ensure only trusted systems can submit or retrieve payment assessments.
+* Improve authentication and authorisation to secure API endpoints and ensure only trusted systems can submit or retrieve payment assessments.
 * Add encryption for incoming and outgoing data.
 
 ### Database Design
@@ -140,7 +142,8 @@ Password: empty
 
 POST a new payment for risk assessment:
 ```bash
-curl -X POST http://localhost:8080/payments/risk \
+curl -u admin:password \
+  -X POST http://localhost:8080/payments/risk \
   -H "Content-Type: application/json" \
   -d '{
     "paymentId": "PAY123",
@@ -157,7 +160,8 @@ curl -X POST http://localhost:8080/payments/risk \
 PACTH a payment after manual review:
 
 ```bash
-curl -X PATCH http://localhost:8080/payments/PAY123/status \
+curl -u admin:password \
+  -X PATCH http://localhost:8080/payments/risk \
   -H "Content-Type: application/json" \
   -d '{
     "status": "APPROVED"
@@ -167,7 +171,7 @@ curl -X PATCH http://localhost:8080/payments/PAY123/status \
 GET a payment:
 
 ```bash
-curl -X GET http://localhost:8080/payments/PAY123
+curl -u admin:password http://localhost:8080/payments/PAY123
 
 ```
 

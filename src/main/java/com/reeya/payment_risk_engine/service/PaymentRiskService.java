@@ -1,6 +1,8 @@
 package com.reeya.payment_risk_engine.service;
 
-import com.reeya.payment_risk_engine.model.*;
+import com.reeya.payment_risk_engine.model.RiskLevel;
+import com.reeya.payment_risk_engine.model.RiskRuleResult;
+import com.reeya.payment_risk_engine.model.Status;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskResponse;
 import com.reeya.payment_risk_engine.model.api.PaymentStatusUpdate;
@@ -21,10 +23,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Service to manage payment risk assessment and status updates
- * rule execution is done asynchronously using a thread pool
- * persistence is done after the risk assessment is complete
- * Idempotency is achieved by checking if payment exists, or through database constraints if passes inital checks
+ * Service to manage payment risk assessment and status updates.
  */
 @Slf4j
 @Service
@@ -44,17 +43,14 @@ public class PaymentRiskService {
             @Value("${payment.risk.decline.threshold}") int declineThreshold,
             @Value("${payment.risk.review.threshold}") int reviewThreshold,
             @Value("${payment.risk.review.timeout}") int timeout
-    )
-    {
+    ) {
         this.entityManager = entityManager;
         this.riskRules = riskRules;
         this.riskRuleExecutor = riskRuleExecutor;
-        if (declineThreshold < 0 || reviewThreshold < 0 || timeout <= 0)
-        {
+        if (declineThreshold < 0 || reviewThreshold < 0 || timeout <= 0) {
             throw new IllegalArgumentException("Thresholds must be non-negative and timeout must be positive");
         }
-        if (reviewThreshold >= declineThreshold)
-        {
+        if (reviewThreshold >= declineThreshold) {
             throw new IllegalArgumentException("Review threshold must be lower than decline threshold");
         }
         this.declineThreshold = declineThreshold;
@@ -74,13 +70,10 @@ public class PaymentRiskService {
         List<String> reasons = results.stream().map(RiskRuleResult::reason).toList();
         PaymentRisk paymentRisk = toPaymentRisk(request, riskScore, reasons);
 
-        try
-        {
+        try {
             entityManager.persist(paymentRisk);
             entityManager.flush();
-        }
-        catch (PersistenceException e)
-        {
+        } catch (PersistenceException e) {
             log.info("Failed to persist payment risk for payment id: {}", request.getPaymentId(), e);
             return getPaymentRiskResponse(request.getPaymentId());
         }
@@ -90,14 +83,12 @@ public class PaymentRiskService {
 
     @Transactional
     public PaymentRiskResponse updateStatus(String paymentId, PaymentStatusUpdate update) {
-        if (paymentId == null || paymentId.isBlank())
-        {
+        if (paymentId == null || paymentId.isBlank()) {
             throw new IllegalArgumentException("Payment id is required");
         }
 
         PaymentRisk paymentRisk = getPaymentRiskOrThrow(paymentId);
-        if (paymentRisk.getStatus() != Status.REQUIRES_REVIEW)
-        {
+        if (paymentRisk.getStatus() != Status.REQUIRES_REVIEW) {
             throw new IllegalStateException("Payment status can only be updated when it requires review");
         }
 
@@ -108,8 +99,7 @@ public class PaymentRiskService {
         return toResponse(paymentRisk);
     }
 
-    public PaymentRiskResponse getPaymentRiskResponse(String paymentId)
-    {
+    public PaymentRiskResponse getPaymentRiskResponse(String paymentId) {
         return toResponse(getPaymentRiskOrThrow(paymentId));
     }
 

@@ -2,7 +2,10 @@ package com.reeya.payment_risk_engine.model.api;
 
 
 import com.reeya.payment_risk_engine.model.Status;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -10,14 +13,13 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * PaymentRiskResponse
+ * Payment risk API response.
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PaymentRiskResponse
-{
+public class PaymentRiskResponse {
 
     private String paymentId;
     private Integer version;

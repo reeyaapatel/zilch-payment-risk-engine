@@ -1,20 +1,27 @@
 package com.reeya.payment_risk_engine.model.api;
-import jakarta.validation.constraints.*;
-import lombok.*;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 
 /**
- * PaymentRiskRequest for incoming payment risk requests
+ * PaymentRiskRequest for incoming payment risk requests.
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PaymentRiskRequest
-{
+public class PaymentRiskRequest {
     @NotBlank
     private String paymentId;
 

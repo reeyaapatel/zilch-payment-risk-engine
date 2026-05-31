@@ -3,6 +3,7 @@ package com.reeya.payment_risk_engine.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.reeya.payment_risk_engine.config.SecurityConfig;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskResponse;
 import com.reeya.payment_risk_engine.model.Status;
@@ -11,7 +12,12 @@ import com.reeya.payment_risk_engine.service.PaymentRiskService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration;
+import org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterAutoConfiguration;
+import org.springframework.boot.security.autoconfigure.web.servlet.ServletWebSecurityAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -22,14 +28,29 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(PaymentRiskController.class)
+@WebMvcTest(
+        value = PaymentRiskController.class,
+        properties = {
+                "spring.security.user.name=admin",
+                "spring.security.user.password=password"
+        }
+)
+@Import(SecurityConfig.class)
+@ImportAutoConfiguration({
+        SecurityAutoConfiguration.class,
+        ServletWebSecurityAutoConfiguration.class,
+        SecurityFilterAutoConfiguration.class
+})
 public class PaymentRiskControllerTest {
+
+    private static final String USERNAME = "admin";
 
     @Autowired
     private MockMvc mockMvc;
@@ -43,13 +64,14 @@ public class PaymentRiskControllerTest {
 
     @Test
     public void assessRisk_shouldReturnCreatedPaymentRiskResponse() throws Exception {
-        //GIVEN
+        // GIVEN
         PaymentRiskRequest request = paymentRiskRequest();
         Mockito.when(paymentRiskService.assessRisk(Mockito.any(PaymentRiskRequest.class)))
                 .thenReturn(paymentRiskResponse(request));
 
-        //WHEN + THEN
+        // WHEN + THEN
         mockMvc.perform(post("/payments/risk")
+                        .with(user(USERNAME))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -72,7 +94,7 @@ public class PaymentRiskControllerTest {
 
     @Test
     public void assessRisk_whenRequestIsInvalidShouldReturnBadRequest() throws Exception {
-        //GIVEN
+        // GIVEN
         PaymentRiskRequest request = PaymentRiskRequest.builder()
                 .paymentId("")
                 .customerId("CUSTOMER-001")
@@ -84,8 +106,9 @@ public class PaymentRiskControllerTest {
                 .buyerIp("1.2.3.4")
                 .build();
 
-        //WHEN + THEN
+        // WHEN + THEN
         mockMvc.perform(post("/payments/risk")
+                        .with(user(USERNAME))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -96,12 +119,13 @@ public class PaymentRiskControllerTest {
 
     @Test
     public void getPayment_shouldReturnPaymentRiskResponse() throws Exception {
-        //GIVEN
+        // GIVEN
         PaymentRiskRequest request = paymentRiskRequest();
         Mockito.when(paymentRiskService.getPaymentRiskResponse("PAY-001")).thenReturn(paymentRiskResponse(request));
 
-        //WHEN + THEN
-        mockMvc.perform(get("/payments/PAY-001"))
+        // WHEN + THEN
+        mockMvc.perform(get("/payments/PAY-001")
+                        .with(user(USERNAME)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.paymentId").value("PAY-001"))
                 .andExpect(jsonPath("$.riskScore").value(101))
@@ -116,14 +140,15 @@ public class PaymentRiskControllerTest {
 
     @Test
     public void updateStatus_shouldReturnUpdatedPaymentRiskResponse() throws Exception {
-        //GIVEN
+        // GIVEN
         PaymentRiskRequest request = paymentRiskRequest();
         PaymentStatusUpdate update = new PaymentStatusUpdate(Status.APPROVED);
         Mockito.when(paymentRiskService.updateStatus(Mockito.eq("PAY-001"), Mockito.any(PaymentStatusUpdate.class)))
                 .thenReturn(paymentRiskResponse(request, Status.APPROVED));
 
-        //WHEN + THEN
+        // WHEN + THEN
         mockMvc.perform(patch("/payments/PAY-001/status")
+                        .with(user(USERNAME))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(update)))
                 .andExpect(status().isOk())
@@ -136,13 +161,22 @@ public class PaymentRiskControllerTest {
     }
 
     @Test
+    public void getPayment_whenAuthenticationIsMissingShouldReturnUnauthorized() throws Exception {
+        mockMvc.perform(get("/payments/PAY-001"))
+                .andExpect(status().isUnauthorized());
+
+        Mockito.verifyNoInteractions(paymentRiskService);
+    }
+
+    @Test
     public void getPayment_whenPaymentDoesNotExistShouldReturnNotFound() throws Exception {
-        //GIVEN
+        // GIVEN
         Mockito.when(paymentRiskService.getPaymentRiskResponse("missing-id"))
                 .thenThrow(new IllegalArgumentException("Payment not found: missing-id"));
 
-        //WHEN + THEN
-        mockMvc.perform(get("/payments/missing-id"))
+        // WHEN + THEN
+        mockMvc.perform(get("/payments/missing-id")
+                        .with(user(USERNAME)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("Payment not found: missing-id"));
 
@@ -157,8 +191,9 @@ public class PaymentRiskControllerTest {
         Mockito.when(paymentRiskService.updateStatus(Mockito.eq("PAY-001"), Mockito.any(PaymentStatusUpdate.class)))
                 .thenThrow(new IllegalStateException("Payment status can only be updated when it requires review"));
 
-        //WHEN + THEN
+        // WHEN + THEN
         mockMvc.perform(patch("/payments/PAY-001/status")
+                        .with(user(USERNAME))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(update)))
                 .andExpect(status().isConflict())
@@ -168,16 +203,14 @@ public class PaymentRiskControllerTest {
         Mockito.verifyNoMoreInteractions(paymentRiskService);
     }
 
-    
-
     @Test
     public void updateStatus_whenRequestIsInvalidShouldReturnBadRequest() throws Exception {
-
-        //GIVEN
+        // GIVEN
         PaymentStatusUpdate update = new PaymentStatusUpdate(null);
 
-        //WHEN + THEN
+        // WHEN + THEN
         mockMvc.perform(patch("/payments/PAY-001/status")
+                        .with(user(USERNAME))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(update)))
                 .andExpect(status().isBadRequest())
@@ -191,11 +224,11 @@ public class PaymentRiskControllerTest {
         Map<String, String> request = Map.of("status", "notvalidstatusforenum");
 
         mockMvc.perform(patch("/payments/PAY-001/status")
+                        .with(user(USERNAME))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Invalid request"));
-
 
         Mockito.verifyNoInteractions(paymentRiskService);
     }

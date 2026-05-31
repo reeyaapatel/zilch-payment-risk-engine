@@ -10,10 +10,7 @@ import org.springframework.stereotype.Component;
 import java.util.OptionalInt;
 
 /**
- * Rule to check credit score
- * -- this would be a call to a credit scoring service instead of a mock and would be able to be
- * -- credit scores threshold values are configurable but would need services to be bounced
- * -- this service assumers a customer id valid from prior service validation
+ * Rule to check a customer's credit score against configured risk thresholds.
  */
 @Component
 public class CreditScoreRule implements RiskRule {
@@ -37,17 +34,20 @@ public class CreditScoreRule implements RiskRule {
             @Value("${low.credit.risk.value}") int lowCreditScoreRiskValue,
             @Value("${medium.credit.risk.value}") int mediumCreditScoreRiskValue
     ) {
-        if (lowCreditScoreThreshold <= 0 || mediumCreditScoreThreshold <= 0 || lowCreditScoreRiskValue <= 0 || mediumCreditScoreRiskValue <= 0)
-        {
-            throw new IllegalArgumentException("Invalid Credit score rule configuration: must have positive thresholds and values");
+        if (lowCreditScoreThreshold <= 0
+                || mediumCreditScoreThreshold <= 0
+                || lowCreditScoreRiskValue <= 0
+                || mediumCreditScoreRiskValue <= 0) {
+            throw new IllegalArgumentException(
+                    "Invalid Credit score rule configuration: must have positive thresholds and values");
         }
-        if (lowCreditScoreThreshold >= mediumCreditScoreThreshold)
-        {
-            throw new IllegalArgumentException("Invalid Credit score rule configuration: Low credit score threshold must be lower than medium credit score threshold");
+        if (lowCreditScoreThreshold >= mediumCreditScoreThreshold) {
+            throw new IllegalArgumentException(
+                    "Invalid Credit score rule configuration: Low credit score threshold must be lower than medium credit score threshold");
         }
-        if (lowCreditScoreRiskValue <= mediumCreditScoreRiskValue)
-        {
-            throw new IllegalArgumentException("Invalid Credit score rule configuration: Low credit score value must be higher than medium credit score value");
+        if (lowCreditScoreRiskValue <= mediumCreditScoreRiskValue) {
+            throw new IllegalArgumentException(
+                    "Invalid Credit score rule configuration: Low credit score value must be higher than medium credit score value");
         }
         this.creditScoreService = creditScoreService;
         this.lowCreditScoreThreshold = lowCreditScoreThreshold;
@@ -60,17 +60,14 @@ public class CreditScoreRule implements RiskRule {
     public RiskRuleResult evaluate(PaymentRiskRequest request) {
         OptionalInt creditScore = creditScoreService.getCreditScore(request.getCustomerId(), request.getBusinessDate());
 
-        if (creditScore.isEmpty())
-        {
+        if (creditScore.isEmpty()) {
             return new RiskRuleResult(RULE_NAME, lowCreditScoreRiskValue, RiskLevel.HIGH, "Credit score not available");
         }
-        if (creditScore.getAsInt() < lowCreditScoreThreshold)
-        {
+        if (creditScore.getAsInt() < lowCreditScoreThreshold) {
             return new RiskRuleResult(RULE_NAME, lowCreditScoreRiskValue, RiskLevel.HIGH, "Credit score is high risk");
         }
 
-        if (creditScore.getAsInt() < mediumCreditScoreThreshold)
-        {
+        if (creditScore.getAsInt() < mediumCreditScoreThreshold) {
             return new RiskRuleResult(RULE_NAME, mediumCreditScoreRiskValue, RiskLevel.MEDIUM, "Credit score is medium risk");
         }
 

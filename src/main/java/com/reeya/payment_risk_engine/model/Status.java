@@ -1,12 +1,9 @@
 package com.reeya.payment_risk_engine.model;
 
-
 /**
- * payment status
+ * Payment status.
  */
-public enum Status
-{
-
+public enum Status {
     APPROVED,
     DECLINED,
     REQUIRES_REVIEW

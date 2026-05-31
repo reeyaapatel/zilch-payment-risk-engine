@@ -10,9 +10,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 
 /**
- * Rule to check amount in payment
- * -- this currently is implemented as a simple threshold check for demonstration purposes
- * -- Threshold values are configurable but would need services to be bounced
+ * Rule to check the payment amount against configured risk thresholds.
  */
 @Component
 public class AmountRule implements RiskRule {
@@ -28,16 +26,18 @@ public class AmountRule implements RiskRule {
             @Value("${amount.high.risk.amount}") BigDecimal highRiskAmount,
             @Value("${amount.medium.risk.amount}") BigDecimal mediumRiskAmount,
             @Value("${amount.high.risk.score}") int highRiskScore,
-            @Value("${amount.medium.risk.score}") int mediumRiskScore)
-    {
+            @Value("${amount.medium.risk.score}") int mediumRiskScore) {
         if (highRiskAmount == null || mediumRiskAmount == null || highRiskScore <= 0 || mediumRiskScore <= 0) {
-            throw new IllegalArgumentException("Invalid configuration for AmountRule: values must not be null and should be positive");
+            throw new IllegalArgumentException(
+                    "Invalid configuration for AmountRule: values must not be null and should be positive");
         }
         if (highRiskAmount.compareTo(mediumRiskAmount) <= 0) {
-            throw new IllegalArgumentException("Invalid configuration for AmountRule: high risk amount should be greater than medium risk amount");
+            throw new IllegalArgumentException(
+                    "Invalid configuration for AmountRule: high risk amount should be greater than medium risk amount");
         }
         if (highRiskScore <= mediumRiskScore) {
-            throw new IllegalArgumentException("Invalid configuration for AmountRule: high risk score should be higher than medium risk score");
+            throw new IllegalArgumentException(
+                    "Invalid configuration for AmountRule: high risk score should be higher than medium risk score");
         }
         this.highRiskAmount = highRiskAmount;
         this.mediumRiskAmount = mediumRiskAmount;
@@ -46,17 +46,12 @@ public class AmountRule implements RiskRule {
     }
 
     @Override
-    public RiskRuleResult evaluate(PaymentRiskRequest request)
-    {
-
-        if (request.getAmount().compareTo(highRiskAmount) > 0)
-        {
+    public RiskRuleResult evaluate(PaymentRiskRequest request) {
+        if (request.getAmount().compareTo(highRiskAmount) > 0) {
             return new RiskRuleResult(RULE_NAME, highRiskScore, RiskLevel.HIGH, "Amount exceeds high risk threshold");
         }
 
-        else if (request.getAmount().compareTo(mediumRiskAmount) > 0)
-        {
-
+        if (request.getAmount().compareTo(mediumRiskAmount) > 0) {
             return new RiskRuleResult(RULE_NAME, mediumRiskScore, RiskLevel.MEDIUM, "Amount exceeds medium risk threshold");
         }
 

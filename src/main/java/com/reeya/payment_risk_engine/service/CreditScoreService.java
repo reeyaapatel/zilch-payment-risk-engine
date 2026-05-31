@@ -16,17 +16,16 @@ public class CreditScoreService {
     private final Cache<CreditScoreCacheKey, Integer> creditScoreCache;
     private final StubCreditScoreClient creditScoreClient;
 
-    public CreditScoreService(Cache<CreditScoreCacheKey, Integer> creditScoreCache, StubCreditScoreClient creditScoreClient)
-    {
+    public CreditScoreService(
+            Cache<CreditScoreCacheKey, Integer> creditScoreCache,
+            StubCreditScoreClient creditScoreClient) {
         this.creditScoreCache = creditScoreCache;
         this.creditScoreClient = creditScoreClient;
     }
 
-    public OptionalInt getCreditScore(String customerId, LocalDate businessDate)
-    {
+    public OptionalInt getCreditScore(String customerId, LocalDate businessDate) {
         Integer cachedScore = creditScoreCache.getIfPresent(new CreditScoreCacheKey(customerId, businessDate));
-        if (cachedScore != null)
-        {
+        if (cachedScore != null) {
             return OptionalInt.of(cachedScore);
         }
 

@@ -36,20 +36,16 @@ public class IpGeoLocationClient {
 
             if (response == null
                     || !SUCCESS.equalsIgnoreCase(response.status())
-                    || !StringUtils.hasText(response.countryCode()))
-            {
+                    || !StringUtils.hasText(response.countryCode())) {
                 log.error("Invalid or missing IP geolocation data for IP: " + ipAddress);
                 return Optional.empty();
             }
 
             return Optional.of(response.countryCode());
 
-        } catch (RestClientException e)
-        {
+        } catch (RestClientException e) {
             log.error("Error fetching IP geolocation data: " + e.getMessage(), e);
             return Optional.empty();
         }
     }
-
-
-    }
+}

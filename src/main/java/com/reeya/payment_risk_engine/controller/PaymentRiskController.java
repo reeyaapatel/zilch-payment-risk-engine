@@ -5,10 +5,17 @@ import com.reeya.payment_risk_engine.model.api.PaymentStatusUpdate;
 import com.reeya.payment_risk_engine.service.PaymentRiskService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Enpoints for the Payment Risk Engine
+ * Endpoints for the Payment Risk Engine.
  */
 @RestController
 @RequestMapping("/payments")
@@ -22,20 +29,19 @@ public class PaymentRiskController {
 
     @PostMapping("/risk")
     @ResponseStatus(HttpStatus.CREATED)
-    public PaymentRiskResponse assessRisk(@Valid @RequestBody PaymentRiskRequest request)
-    {
+    public PaymentRiskResponse assessRisk(@Valid @RequestBody PaymentRiskRequest request) {
         return paymentRiskService.assessRisk(request);
     }
 
     @GetMapping("/{paymentId}")
-    public PaymentRiskResponse getPayment(@PathVariable String paymentId)
-    {
+    public PaymentRiskResponse getPayment(@PathVariable String paymentId) {
         return paymentRiskService.getPaymentRiskResponse(paymentId);
     }
 
     @PatchMapping("/{paymentId}/status")
-    public PaymentRiskResponse updateStatus(@PathVariable String paymentId, @Valid @RequestBody PaymentStatusUpdate update)
-    {
+    public PaymentRiskResponse updateStatus(
+            @PathVariable String paymentId,
+            @Valid @RequestBody PaymentStatusUpdate update) {
         return paymentRiskService.updateStatus(paymentId, update);
     }
 }

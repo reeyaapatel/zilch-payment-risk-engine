@@ -2,8 +2,18 @@ package com.reeya.payment_risk_engine.model.persistence;
 
 import com.reeya.payment_risk_engine.model.Status;
 import com.reeya.payment_risk_engine.model.functions.StringListConverter;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Version;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -12,7 +22,7 @@ import java.util.List;
 
 
 /**
- * PaymentRisk entity for storing payment risk information
+ * PaymentRisk entity for storing payment risk information.
  */
 @Entity
 @Table(name = "PAYMENT_RISK")
@@ -20,8 +30,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PaymentRisk
-{
+public class PaymentRisk {
 
     @Id
     @Column(name = "payment_id", nullable = false, updatable = false)

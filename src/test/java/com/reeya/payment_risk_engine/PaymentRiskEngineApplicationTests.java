@@ -13,8 +13,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 class PaymentRiskEngineApplicationTests {
 
     @Test
-    void contextLoads()
-    {
+    void contextLoads() {
     }
-
 }

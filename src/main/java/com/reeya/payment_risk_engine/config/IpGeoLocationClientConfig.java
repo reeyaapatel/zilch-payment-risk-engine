@@ -14,14 +14,12 @@ public class IpGeoLocationClientConfig {
 
     private final String ipEndpoint;
 
-    public IpGeoLocationClientConfig(@Value("${ip.geo.location.api.endpoint}") @NotBlank String ipEndpoint)
-    {
+    public IpGeoLocationClientConfig(@Value("${ip.geo.location.api.endpoint}") @NotBlank String ipEndpoint) {
         this.ipEndpoint = ipEndpoint;
     }
 
     @Bean
-    public RestClient ipGeoLocationRestClient()
-    {
+    public RestClient ipGeoLocationRestClient() {
         return RestClient.builder().baseUrl(ipEndpoint).build();
     }
 }
