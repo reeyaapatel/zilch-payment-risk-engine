@@ -155,7 +155,7 @@ curl -u admin:password \
   }'
 ```
 
-PACTH a payment after manual review:
+PATCH a payment after manual review:
 
 ```bash
 curl -u admin:password \
@@ -173,7 +173,7 @@ curl -u admin:password http://localhost:8080/payments/PAY123
 
 ```
 
-expected response:
+Expected response:
 ```json
 {"paymentId":"PAY123","version":1,"customerId":"CUSTOMER-001","businessDate":"2026-05-30","amount":100.00,"currency":"GBP","merchantName":"ASOS","merchantCountryCode":"GB","buyerIp":"1.178.94.255","riskScore":1,"status":"APPROVED","reasons":["Buyer and merchant country match","Credit score is low risk","Amount is within acceptable threshold"],"createdAt":"2026-05-30T19:37:19.769347Z","lastUpdatedAt":"2026-05-30T19:37:19.769347Z"}
 ```
