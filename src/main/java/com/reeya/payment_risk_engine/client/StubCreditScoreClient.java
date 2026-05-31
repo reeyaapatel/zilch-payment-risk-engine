@@ -3,6 +3,7 @@ package com.reeya.payment_risk_engine.client;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.util.OptionalInt;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -11,8 +12,14 @@ import java.util.concurrent.ThreadLocalRandom;
 @Component
 public class StubCreditScoreClient {
 
-    public int calculateCreditScore(String customerId, LocalDate businessDate)
+    /**
+     * Simulates a credit score calculation for a customer id. - so not currently using input parameters
+     * @param customerId
+     * @param businessDate
+     * @return OptionalInt
+     */
+    public OptionalInt calculateCreditScore(String customerId, LocalDate businessDate)
     {
-        return ThreadLocalRandom.current().nextInt(300, 901);
+        return OptionalInt.of(ThreadLocalRandom.current().nextInt(300, 901));
     }
 }

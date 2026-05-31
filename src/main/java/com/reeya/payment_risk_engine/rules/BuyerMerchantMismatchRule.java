@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 public class BuyerMerchantMismatchRule implements RiskRule
 {
 
-    public static final String RULE_NAME = "BUYER_MERCHANT_MISMATCH_RULE";
+    private static final String RULE_NAME = "BUYER_MERCHANT_MISMATCH_RULE";
 
     private final IpGeoLocationClient client;
 

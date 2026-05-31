@@ -23,6 +23,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -56,7 +57,7 @@ public class PaymentRiskIntegrationTest {
         Mockito.when(ipGeoLocationClient.getCountryCode("1.2.3.4"))
                 .thenReturn(Optional.of("GB"));
         Mockito.when(creditScoreClient.calculateCreditScore("CUSTOMER-001", businessDate))
-                .thenReturn(700);
+                .thenReturn(OptionalInt.of(700));
 
         Map<String, Object> request = Map.of(
                 "paymentId", "IT-PAY-001",
@@ -77,7 +78,7 @@ public class PaymentRiskIntegrationTest {
                 .andExpect(jsonPath("$.customerId").value("CUSTOMER-001"))
                 .andExpect(jsonPath("$.businessDate").value("2026-05-30"))
                 .andExpect(jsonPath("$.merchantCountryCode").value("GB"))
-                .andExpect(jsonPath("$.riskScore").value(1))
+                .andExpect(jsonPath("$.riskScore").value(0))
                 .andExpect(jsonPath("$.status").value("APPROVED"))
                 .andExpect(jsonPath("$.reasons", hasSize(3)));
 

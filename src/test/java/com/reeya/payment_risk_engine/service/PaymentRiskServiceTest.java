@@ -261,9 +261,7 @@ public class PaymentRiskServiceTest {
     public void updateStatus_whenPaymentRequiresReviewUpdatesStatus() {
         //GIVEN
         PaymentRisk storedPayment = paymentRisk(40, Status.REQUIRES_REVIEW);
-        PaymentStatusUpdate update = PaymentStatusUpdate.builder()
-                .status(Status.APPROVED)
-                .build();
+        PaymentStatusUpdate update = new PaymentStatusUpdate(Status.APPROVED);
         Mockito.when(entityManager.find(PaymentRisk.class, "PAY-001")).thenReturn(storedPayment);
 
         //WHEN
@@ -289,9 +287,7 @@ public class PaymentRiskServiceTest {
     public void updateStatus_whenPaymentDoesNotRequireReviewThrowsError() {
         //GIVEN
         PaymentRisk storedPayment = paymentRisk(11, Status.APPROVED);
-        PaymentStatusUpdate update = PaymentStatusUpdate.builder()
-                .status(Status.DECLINED)
-                .build();
+        PaymentStatusUpdate update = new PaymentStatusUpdate(Status.DECLINED);
         Mockito.when(entityManager.find(PaymentRisk.class, "PAY-001")).thenReturn(storedPayment);
 
         //WHEN
@@ -312,9 +308,7 @@ public class PaymentRiskServiceTest {
     public void updateStatus_whenPaymentIsDeclinedThrowsError() {
         //GIVEN
         PaymentRisk storedPayment = paymentRisk(70, Status.DECLINED);
-        PaymentStatusUpdate update = PaymentStatusUpdate.builder()
-                .status(Status.APPROVED)
-                .build();
+        PaymentStatusUpdate update = new PaymentStatusUpdate(Status.APPROVED);
         Mockito.when(entityManager.find(PaymentRisk.class, "PAY-001")).thenReturn(storedPayment);
 
         //WHEN
@@ -334,9 +328,7 @@ public class PaymentRiskServiceTest {
     @Test
     public void updateStatus_whenPaymentDoesNotExistThrowsError() {
         //GIVEN
-        PaymentStatusUpdate update = PaymentStatusUpdate.builder()
-                .status(Status.APPROVED)
-                .build();
+        PaymentStatusUpdate update = new PaymentStatusUpdate(Status.APPROVED);
         Mockito.when(entityManager.find(PaymentRisk.class, "doesnt-exist-id")).thenReturn(null);
 
         //WHEN
@@ -355,9 +347,7 @@ public class PaymentRiskServiceTest {
     @Test
     public void updateStatus_whenPaymentIdIsNullThrowsError() {
         //GIVEN
-        PaymentStatusUpdate update = PaymentStatusUpdate.builder()
-                .status(Status.APPROVED)
-                .build();
+        PaymentStatusUpdate update = new PaymentStatusUpdate(Status.APPROVED);
 
         //WHEN
         IllegalArgumentException exception = assertThrows(
@@ -466,12 +456,7 @@ public class PaymentRiskServiceTest {
     }
 
     private RiskRuleResult ruleResult(String ruleName, int score, RiskLevel riskLevel, String reason) {
-        return RiskRuleResult.builder()
-                .ruleName(ruleName)
-                .score(score)
-                .riskLevel(riskLevel)
-                .reason(reason)
-                .build();
+        return new RiskRuleResult(ruleName, score, riskLevel, reason);
     }
 
 }

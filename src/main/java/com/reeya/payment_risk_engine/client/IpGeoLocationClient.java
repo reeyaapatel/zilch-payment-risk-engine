@@ -18,7 +18,6 @@ import java.util.Optional;
 @Component
 public class IpGeoLocationClient {
 
-
     private final RestClient ipGeoLocationClient;
 
     private static final String SUCCESS = "success";
@@ -36,14 +35,14 @@ public class IpGeoLocationClient {
                     .body(IpGeoLocationResponse.class);
 
             if (response == null
-                    || !SUCCESS.equalsIgnoreCase(response.getStatus())
-                    || !StringUtils.hasText(response.getCountryCode()))
+                    || !SUCCESS.equalsIgnoreCase(response.status())
+                    || !StringUtils.hasText(response.countryCode()))
             {
                 log.error("Invalid or missing IP geolocation data for IP: " + ipAddress);
                 return Optional.empty();
             }
 
-            return Optional.of(response.getCountryCode());
+            return Optional.of(response.countryCode());
 
         } catch (RestClientException e)
         {

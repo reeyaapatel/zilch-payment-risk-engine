@@ -13,7 +13,7 @@ import java.util.Map;
  * error handler for the Payment Risk Engine to provide clear error messages
  */
 @RestControllerAdvice
-public class PaymentRiskExceptionHandler {
+public class ApiExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException exception)

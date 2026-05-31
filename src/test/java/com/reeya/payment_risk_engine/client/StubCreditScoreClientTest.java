@@ -3,6 +3,7 @@ package com.reeya.payment_risk_engine.client;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.util.OptionalInt;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -15,10 +16,11 @@ public class StubCreditScoreClientTest {
         StubCreditScoreClient creditScoreClient = new StubCreditScoreClient();
 
         //WHEN
-        int score = creditScoreClient.calculateCreditScore("CUSTOMER-001", LocalDate.parse("2026-05-30"));
+        OptionalInt score = creditScoreClient.calculateCreditScore("CUSTOMER-001", LocalDate.parse("2026-05-30"));
 
         //THEN
-        assertTrue(score >= 300);
-        assertTrue(score <= 900);
+        assertTrue(score.isPresent());
+        assertTrue(score.getAsInt() >= 300);
+        assertTrue(score.getAsInt() <= 900);
     }
 }

@@ -5,6 +5,7 @@ import com.reeya.payment_risk_engine.client.StubCreditScoreClient;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.OptionalInt;
 
 /**
  * Service for calculating and caching credit scores.
@@ -21,10 +22,18 @@ public class CreditScoreService {
         this.creditScoreClient = creditScoreClient;
     }
 
-    public int getCreditScore(String customerId, LocalDate businessDate) {
-        return creditScoreCache.get(
-                new CreditScoreCacheKey(customerId, businessDate),
-                cacheKey -> creditScoreClient.calculateCreditScore(cacheKey.customerId(), cacheKey.businessDate())
+    public OptionalInt getCreditScore(String customerId, LocalDate businessDate)
+    {
+        Integer cachedScore = creditScoreCache.getIfPresent(new CreditScoreCacheKey(customerId, businessDate));
+        if (cachedScore != null)
+        {
+            return OptionalInt.of(cachedScore);
+        }
+
+        OptionalInt score = creditScoreClient.calculateCreditScore(customerId, businessDate);
+        score.ifPresent(value ->
+                creditScoreCache.put(new CreditScoreCacheKey(customerId, businessDate), value)
         );
+        return score;
     }
 }

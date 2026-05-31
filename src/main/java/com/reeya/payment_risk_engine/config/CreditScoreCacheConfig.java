@@ -19,9 +19,13 @@ public class CreditScoreCacheConfig {
 
     @Bean
     public Cache<CreditScoreCacheKey, Integer> creditScoreCache(
-            @Value("${credit.score.cache.maximum-size:10000}") long maximumSize,
-            @Value("${credit.score.cache.expire-after-write-minutes:1000}") long expireAfterWriteMinutes)
+            @Value("${credit.score.cache.maximum-size}") long maximumSize,
+            @Value("${credit.score.cache.expire-after-write-minutes}") long expireAfterWriteMinutes)
     {
+        if (maximumSize <= 0 || expireAfterWriteMinutes <= 0)
+        {
+            throw new IllegalArgumentException("Invalid Cache configuration: must have positive maximum size and expiration time");
+        }
         return Caffeine.newBuilder()
                 .maximumSize(maximumSize)
                 .expireAfterWrite(Duration.ofMinutes(expireAfterWriteMinutes))

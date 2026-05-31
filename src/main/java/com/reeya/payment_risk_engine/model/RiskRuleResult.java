@@ -1,21 +1,12 @@
 package com.reeya.payment_risk_engine.model;
 
-
-import lombok.*;
-
-
 /**
- * ouput from risk rules
+ * Output from a risk rule.
  */
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-@Getter
-@Setter
-public class RiskRuleResult
-{
-    private String ruleName;
-    private int score;
-    private RiskLevel riskLevel;
-    private String reason;
+public record RiskRuleResult(
+        String ruleName,
+        int score,
+        RiskLevel riskLevel,
+        String reason
+) {
 }

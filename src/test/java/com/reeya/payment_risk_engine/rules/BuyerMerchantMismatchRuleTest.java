@@ -38,28 +38,38 @@ public class BuyerMerchantMismatchRuleTest {
     public void evaluate_shouldReturnExpectedRisk(
             Optional<String> buyerCountryCode,
             String merchantCountryCode,
-            int expectedScore,
-            RiskLevel expectedRiskLevel,
-            String expectedReason
+            RiskRuleResult expectedResult
     ) {
         PaymentRiskRequest request = paymentRiskRequest(merchantCountryCode);
         Mockito.when(ipGeoLocationClient.getCountryCode("1.2.3.4")).thenReturn(buyerCountryCode);
 
         RiskRuleResult result = rule.evaluate(request);
 
-        assertEquals("BUYER_MERCHANT_MISMATCH_RULE", result.getRuleName());
-        assertEquals(expectedScore, result.getScore());
-        assertEquals(expectedRiskLevel, result.getRiskLevel());
-        assertEquals(expectedReason, result.getReason());
+        assertEquals(expectedResult, result);
         Mockito.verify(ipGeoLocationClient).getCountryCode("1.2.3.4");
         Mockito.verifyNoMoreInteractions(ipGeoLocationClient);
     }
 
     private static Stream<Arguments> buyerMerchantCases() {
         return Stream.of(
-                Arguments.of(Optional.of("GB"), "GB", 0, RiskLevel.LOW, "Buyer and merchant country match"),
-                Arguments.of(Optional.of("US"), "GB", 50, RiskLevel.MEDIUM, "Buyer and merchant country do not match"),
-                Arguments.of(Optional.empty(), "GB", 50, RiskLevel.MEDIUM, "Buyer and merchant country do not match")
+                Arguments.of(Optional.of("GB"), "GB", new RiskRuleResult(
+                        "BUYER_MERCHANT_MISMATCH_RULE",
+                        0,
+                        RiskLevel.LOW,
+                        "Buyer and merchant country match"
+                )),
+                Arguments.of(Optional.of("US"), "GB", new RiskRuleResult(
+                        "BUYER_MERCHANT_MISMATCH_RULE",
+                        50,
+                        RiskLevel.MEDIUM,
+                        "Buyer and merchant country do not match"
+                )),
+                Arguments.of(Optional.empty(), "GB", new RiskRuleResult(
+                        "BUYER_MERCHANT_MISMATCH_RULE",
+                        50,
+                        RiskLevel.MEDIUM,
+                        "Buyer and merchant country do not match"
+                ))
         );
     }
 

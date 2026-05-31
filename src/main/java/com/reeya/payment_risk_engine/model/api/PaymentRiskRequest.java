@@ -13,8 +13,6 @@ import java.time.LocalDate;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter
-@Setter
 public class PaymentRiskRequest
 {
     @NotBlank
@@ -39,7 +37,6 @@ public class PaymentRiskRequest
     @NotBlank
     @Size(min = 2, max = 2)
     @Pattern(regexp = "^[A-Z]{2,3}$", message = "ISO country code required")
-    @NotBlank
     private String merchantCountryCode;
 
     @NotBlank

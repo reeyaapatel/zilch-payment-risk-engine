@@ -118,9 +118,7 @@ public class PaymentRiskControllerTest {
     public void updateStatus_shouldReturnUpdatedPaymentRiskResponse() throws Exception {
         //GIVEN
         PaymentRiskRequest request = paymentRiskRequest();
-        PaymentStatusUpdate update = PaymentStatusUpdate.builder()
-                .status(Status.APPROVED)
-                .build();
+        PaymentStatusUpdate update = new PaymentStatusUpdate(Status.APPROVED);
         Mockito.when(paymentRiskService.updateStatus(Mockito.eq("PAY-001"), Mockito.any(PaymentStatusUpdate.class)))
                 .thenReturn(paymentRiskResponse(request, Status.APPROVED));
 
@@ -155,9 +153,7 @@ public class PaymentRiskControllerTest {
     @Test
     public void updateStatus_whenPaymentDoesNotRequireReviewShouldReturnConflict() throws Exception {
         // GIVEN
-        PaymentStatusUpdate update = PaymentStatusUpdate.builder()
-                .status(Status.APPROVED)
-                .build();
+        PaymentStatusUpdate update = new PaymentStatusUpdate(Status.APPROVED);
         Mockito.when(paymentRiskService.updateStatus(Mockito.eq("PAY-001"), Mockito.any(PaymentStatusUpdate.class)))
                 .thenThrow(new IllegalStateException("Payment status can only be updated when it requires review"));
 
@@ -178,9 +174,7 @@ public class PaymentRiskControllerTest {
     public void updateStatus_whenRequestIsInvalidShouldReturnBadRequest() throws Exception {
 
         //GIVEN
-        PaymentStatusUpdate update = PaymentStatusUpdate.builder()
-                .status(null)
-                .build();
+        PaymentStatusUpdate update = new PaymentStatusUpdate(null);
 
         //WHEN + THEN
         mockMvc.perform(patch("/payments/PAY-001/status")

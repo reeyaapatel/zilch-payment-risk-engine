@@ -1,6 +1,5 @@
 package com.reeya.payment_risk_engine.model.functions;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -10,13 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class StringListConverterTest {
 
-    private StringListConverter converter;
-
-    @BeforeEach
-    public void setUp()
-    {
-        converter = new StringListConverter();
-    }
+    private final StringListConverter converter = new StringListConverter();
 
     @Test
     public void convertToDatabaseColumn_whenAttributeHasValues()

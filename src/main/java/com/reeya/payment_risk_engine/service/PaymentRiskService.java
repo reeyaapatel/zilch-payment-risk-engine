@@ -41,14 +41,22 @@ public class PaymentRiskService {
             EntityManager entityManager,
             List<RiskRule> riskRules,
             Executor riskRuleExecutor,
-            @Value("${payment.risk.decline.threshold:70}") int declineThreshold,
-            @Value("${payment.risk.review.threshold:40}") int reviewThreshold,
-            @Value("${payment.risk.review.timout:3}") int timeout
+            @Value("${payment.risk.decline.threshold}") int declineThreshold,
+            @Value("${payment.risk.review.threshold}") int reviewThreshold,
+            @Value("${payment.risk.review.timeout}") int timeout
     )
     {
         this.entityManager = entityManager;
         this.riskRules = riskRules;
         this.riskRuleExecutor = riskRuleExecutor;
+        if (declineThreshold < 0 || reviewThreshold < 0 || timeout <= 0)
+        {
+            throw new IllegalArgumentException("Thresholds must be non-negative and timeout must be positive");
+        }
+        if (reviewThreshold >= declineThreshold)
+        {
+            throw new IllegalArgumentException("Review threshold must be lower than decline threshold");
+        }
         this.declineThreshold = declineThreshold;
         this.reviewThreshold = reviewThreshold;
         this.timeout = timeout;
@@ -62,8 +70,8 @@ public class PaymentRiskService {
         }
 
         List<RiskRuleResult> results = evaluateRules(request);
-        int riskScore = results.stream().mapToInt(RiskRuleResult::getScore).sum();
-        List<String> reasons = results.stream().map(RiskRuleResult::getReason).toList();
+        int riskScore = results.stream().mapToInt(RiskRuleResult::score).sum();
+        List<String> reasons = results.stream().map(RiskRuleResult::reason).toList();
         PaymentRisk paymentRisk = toPaymentRisk(request, riskScore, reasons);
 
         try
@@ -93,7 +101,7 @@ public class PaymentRiskService {
             throw new IllegalStateException("Payment status can only be updated when it requires review");
         }
 
-        paymentRisk.setStatus(update.getStatus());
+        paymentRisk.setStatus(update.status());
         paymentRisk.setLastUpdatedAt(Instant.now());
         entityManager.flush();
 
@@ -119,13 +127,12 @@ public class PaymentRiskService {
                 .map(rule -> CompletableFuture
                         .supplyAsync(() -> rule.evaluate(request), riskRuleExecutor)
                         .orTimeout(timeout, TimeUnit.SECONDS)
-                        .exceptionally(exception -> RiskRuleResult.builder()
-                                .ruleName(rule.getRuleName())
-                                .score(reviewThreshold)
-                                .riskLevel(RiskLevel.HIGH)
-                                .reason("Rule failed or timed out")
-                                .build()
-                        )
+                        .exceptionally(exception -> new RiskRuleResult(
+                                rule.getRuleName(),
+                                reviewThreshold,
+                                RiskLevel.HIGH,
+                                "Rule failed or timed out"
+                        ))
                 )
                 .toList();
 
