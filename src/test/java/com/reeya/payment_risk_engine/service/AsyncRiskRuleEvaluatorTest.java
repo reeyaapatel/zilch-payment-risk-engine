@@ -18,6 +18,7 @@ import java.util.concurrent.Executor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
 public class AsyncRiskRuleEvaluatorTest {
@@ -64,8 +65,8 @@ public class AsyncRiskRuleEvaluatorTest {
 
         // THEN
         assertEquals(List.of(amountResult, ipResult), results);
-        Mockito.verify(riskRule1).evaluate(paymentRiskRequest);
-        Mockito.verify(riskRule2).evaluate(paymentRiskRequest);
+        Mockito.verify(riskRule1, times(1)).evaluate(paymentRiskRequest);
+        Mockito.verify(riskRule2, times(1)).evaluate(paymentRiskRequest);
         Mockito.verifyNoMoreInteractions(riskRule1, riskRule2);
     }
 
@@ -90,9 +91,9 @@ public class AsyncRiskRuleEvaluatorTest {
                 new RiskRuleResult("BROKEN_RULE", 40, RiskLevel.HIGH, "Rule failed or timed out"),
                 ipResult
         ), results);
-        Mockito.verify(riskRule1).evaluate(paymentRiskRequest);
-        Mockito.verify(riskRule1).getRuleName();
-        Mockito.verify(riskRule2).evaluate(paymentRiskRequest);
+        Mockito.verify(riskRule1, times(1)).evaluate(paymentRiskRequest);
+        Mockito.verify(riskRule1, times(1)).getRuleName();
+        Mockito.verify(riskRule2, times(1)).evaluate(paymentRiskRequest);
         Mockito.verifyNoMoreInteractions(riskRule1, riskRule2);
     }
 
@@ -115,7 +116,7 @@ public class AsyncRiskRuleEvaluatorTest {
         assertEquals(List.of(
                 new RiskRuleResult("SLOW_RULE", 40, RiskLevel.HIGH, "Rule failed or timed out")
         ), results);
-        Mockito.verify(riskRule1).getRuleName();
+        Mockito.verify(riskRule1, times(1)).getRuleName();
         Mockito.verifyNoMoreInteractions(riskRule1);
     }
 

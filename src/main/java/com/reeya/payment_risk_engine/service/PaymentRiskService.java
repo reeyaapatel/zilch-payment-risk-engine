@@ -10,7 +10,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -26,14 +25,14 @@ public class PaymentRiskService {
 
     private final EntityManager entityManager;
     private final RiskRuleEvaluator riskRuleEvaluator;
-    private final int declineThreshold;
-    private final int reviewThreshold;
+    private final RiskDecisionPolicy riskDecisionPolicy;
+    private final RiskScoreCalculator riskScoreCalculator;
 
     public PaymentRiskService(
             EntityManager entityManager,
             RiskRuleEvaluator riskRuleEvaluator,
-            @Value("${payment.risk.decline.threshold}") int declineThreshold,
-            @Value("${payment.risk.review.threshold}") int reviewThreshold
+            RiskDecisionPolicy riskDecisionPolicy,
+            RiskScoreCalculator riskScoreCalculator
     ) {
         if (entityManager == null) {
             throw new IllegalArgumentException("EntityManager must not be null");
@@ -41,17 +40,17 @@ public class PaymentRiskService {
         if (riskRuleEvaluator == null) {
             throw new IllegalArgumentException("RiskRuleEvaluator must not be null");
         }
-        if (declineThreshold < 0 || reviewThreshold < 0) {
-            throw new IllegalArgumentException("Thresholds must be non-negative");
+        if (riskDecisionPolicy == null) {
+            throw new IllegalArgumentException("RiskDecisionPolicy must not be null");
         }
-        if (reviewThreshold >= declineThreshold) {
-            throw new IllegalArgumentException("Review threshold must be lower than decline threshold");
+        if (riskScoreCalculator == null) {
+            throw new IllegalArgumentException("RiskScoreCalculator must not be null");
         }
 
         this.entityManager = entityManager;
         this.riskRuleEvaluator = riskRuleEvaluator;
-        this.declineThreshold = declineThreshold;
-        this.reviewThreshold = reviewThreshold;
+        this.riskDecisionPolicy = riskDecisionPolicy;
+        this.riskScoreCalculator = riskScoreCalculator;
     }
 
     @Transactional
@@ -62,7 +61,7 @@ public class PaymentRiskService {
         }
 
         List<RiskRuleResult> results = riskRuleEvaluator.evaluate(request);
-        int riskScore = results.stream().mapToInt(RiskRuleResult::score).sum();
+        int riskScore = riskScoreCalculator.calculate(results);
         List<String> reasons = results.stream().map(RiskRuleResult::reason).toList();
         PaymentRisk paymentRisk = toPaymentRisk(request, riskScore, reasons);
 
@@ -147,12 +146,6 @@ public class PaymentRiskService {
     }
 
     private Status determineDecision(int score) {
-        if (score >= declineThreshold) {
-            return Status.DECLINED;
-        }
-        if (score >= reviewThreshold) {
-            return Status.REQUIRES_REVIEW;
-        }
-        return Status.APPROVED;
+        return riskDecisionPolicy.determineDecision(score);
     }
 }
