@@ -16,7 +16,7 @@ import java.util.Optional;
  */
 @Slf4j
 @Component
-public class IpGeoLocationClient {
+public class IpGeoLocationClient implements IpGeoLocationProvider {
 
     private final RestClient ipGeoLocationClient;
 
@@ -26,6 +26,7 @@ public class IpGeoLocationClient {
         this.ipGeoLocationClient = ipGeoLocationClient;
     }
 
+    @Override
     public Optional<String> getCountryCode(String ipAddress) {
 
         try {

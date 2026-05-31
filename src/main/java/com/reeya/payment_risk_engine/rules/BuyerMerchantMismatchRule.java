@@ -1,6 +1,6 @@
 package com.reeya.payment_risk_engine.rules;
 
-import com.reeya.payment_risk_engine.client.IpGeoLocationClient;
+import com.reeya.payment_risk_engine.client.IpGeoLocationProvider;
 import com.reeya.payment_risk_engine.model.RiskLevel;
 import com.reeya.payment_risk_engine.model.RiskRuleResult;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
@@ -16,11 +16,11 @@ public class BuyerMerchantMismatchRule implements RiskRule {
 
     private static final String RULE_NAME = "BUYER_MERCHANT_MISMATCH_RULE";
 
-    private final IpGeoLocationClient client;
+    private final IpGeoLocationProvider ipGeoLocationProvider;
 
     @Override
     public RiskRuleResult evaluate(PaymentRiskRequest request) {
-        boolean countryMatch = client.getCountryCode(request.getBuyerIp())
+        boolean countryMatch = ipGeoLocationProvider.getCountryCode(request.getBuyerIp())
                 .map(country -> country.equals(request.getMerchantCountryCode()))
                 .orElse(false);
 

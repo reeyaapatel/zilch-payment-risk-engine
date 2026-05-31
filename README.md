@@ -64,7 +64,7 @@ The thresholds and scoring model are intentionally simple and are intended to de
 * Store rule thresholds and configuration in the database rather than application properties.
 * Add the ability to enable or disable individual risk rules through configuration. This would be useful during releases, incident management, or gradual rule rollouts.
 * Support customer-specific or segment-specific risk thresholds, allowing risk models to be tuned for different customer groups.
-* Enhance the risk scoring model. The current implementation uses simple score aggregation; a production system would likely use weighted scoring and more sophisticated decisioning logic.
+* Enhance the risk scoring model. The current implementation uses simple score aggregation; a production system would likely use weighted scoring per rule
 * Add additional risk rules such as blocked merchant checks, unusual customer activity detection, and velocity checks.
 * Integrate with external fraud, credit, and customer verification providers.
 
@@ -77,7 +77,7 @@ The thresholds and scoring model are intentionally simple and are intended to de
 
 ### Resilience & Performance
 
-* Futher optimise the cache strategies for recent payments and all frequently accessed external API responses with appropriate expiration policies.
+* Further optimise the cache strategies for recent payments and all frequently accessed external API responses with appropriate expiration policies.
 * Implement timeout and retry policies for external API calls. The current implementation applies timeouts at the rule execution level; in a production system, individual client calls should also have their own timeout policies.
 
 ### Security

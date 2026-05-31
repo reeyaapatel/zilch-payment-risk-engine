@@ -1,7 +1,7 @@
 package com.reeya.payment_risk_engine.service;
 
 import com.github.benmanes.caffeine.cache.Cache;
-import com.reeya.payment_risk_engine.client.StubCreditScoreClient;
+import com.reeya.payment_risk_engine.client.CreditScoreClient;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +16,7 @@ import java.util.OptionalInt;
 public class CreditScoreService {
 
     private final Cache<CreditScoreCacheKey, Integer> creditScoreCache;
-    private final StubCreditScoreClient creditScoreClient;
+    private final CreditScoreClient creditScoreClient;
 
     public OptionalInt getCreditScore(String customerId, LocalDate businessDate) {
         Integer cachedScore = creditScoreCache.getIfPresent(new CreditScoreCacheKey(customerId, businessDate));

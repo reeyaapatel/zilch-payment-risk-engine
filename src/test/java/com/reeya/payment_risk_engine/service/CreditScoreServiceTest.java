@@ -1,7 +1,7 @@
 package com.reeya.payment_risk_engine.service;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.reeya.payment_risk_engine.client.StubCreditScoreClient;
+import com.reeya.payment_risk_engine.client.CreditScoreClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -15,12 +15,12 @@ import static org.mockito.Mockito.times;
 
 public class CreditScoreServiceTest {
 
-    private StubCreditScoreClient creditScoreClient;
+    private CreditScoreClient creditScoreClient;
     private CreditScoreService creditScoreService;
 
     @BeforeEach
     public void setUp() {
-        creditScoreClient = Mockito.mock(StubCreditScoreClient.class);
+        creditScoreClient = Mockito.mock(CreditScoreClient.class);
         creditScoreService = new CreditScoreService(Caffeine.newBuilder().build(), creditScoreClient);
     }
 

@@ -1,13 +1,11 @@
 package com.reeya.payment_risk_engine.service;
 
-import com.reeya.payment_risk_engine.model.RiskLevel;
 import com.reeya.payment_risk_engine.model.RiskRuleResult;
 import com.reeya.payment_risk_engine.model.Status;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskResponse;
 import com.reeya.payment_risk_engine.model.api.PaymentStatusUpdate;
 import com.reeya.payment_risk_engine.model.persistence.PaymentRisk;
-import com.reeya.payment_risk_engine.rules.RiskRule;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
@@ -18,9 +16,6 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Service to manage payment risk assessment and status updates.
@@ -30,32 +25,26 @@ import java.util.concurrent.TimeUnit;
 public class PaymentRiskService {
 
     private final EntityManager entityManager;
-    private final List<RiskRule> riskRules;
-    private final Executor riskRuleExecutor;
+    private final RiskRuleEvaluator riskRuleEvaluator;
     private final int declineThreshold;
     private final int reviewThreshold;
-    private final int timeout;
 
     public PaymentRiskService(
             EntityManager entityManager,
-            List<RiskRule> riskRules,
-            Executor riskRuleExecutor,
+            RiskRuleEvaluator riskRuleEvaluator,
             @Value("${payment.risk.decline.threshold}") int declineThreshold,
-            @Value("${payment.risk.review.threshold}") int reviewThreshold,
-            @Value("${payment.risk.review.timeout}") int timeout
+            @Value("${payment.risk.review.threshold}") int reviewThreshold
     ) {
         this.entityManager = entityManager;
-        this.riskRules = riskRules;
-        this.riskRuleExecutor = riskRuleExecutor;
-        if (declineThreshold < 0 || reviewThreshold < 0 || timeout <= 0) {
-            throw new IllegalArgumentException("Thresholds must be non-negative and timeout must be positive");
+        this.riskRuleEvaluator = riskRuleEvaluator;
+        if (declineThreshold < 0 || reviewThreshold < 0) {
+            throw new IllegalArgumentException("Thresholds must be non-negative");
         }
         if (reviewThreshold >= declineThreshold) {
             throw new IllegalArgumentException("Review threshold must be lower than decline threshold");
         }
         this.declineThreshold = declineThreshold;
         this.reviewThreshold = reviewThreshold;
-        this.timeout = timeout;
     }
 
     @Transactional
@@ -65,7 +54,7 @@ public class PaymentRiskService {
             return toResponse(existingPayment.get());
         }
 
-        List<RiskRuleResult> results = evaluateRulesAsynchronously(request);
+        List<RiskRuleResult> results = riskRuleEvaluator.evaluate(request);
         int riskScore = results.stream().mapToInt(RiskRuleResult::score).sum();
         List<String> reasons = results.stream().map(RiskRuleResult::reason).toList();
         PaymentRisk paymentRisk = toPaymentRisk(request, riskScore, reasons);
@@ -110,25 +99,6 @@ public class PaymentRiskService {
     private PaymentRisk getPaymentRiskOrThrow(String paymentId) {
         return findPaymentRisk(paymentId)
                 .orElseThrow(() -> new IllegalArgumentException("Payment not found: " + paymentId));
-    }
-
-    private List<RiskRuleResult> evaluateRulesAsynchronously(PaymentRiskRequest request) {
-        List<CompletableFuture<RiskRuleResult>> ruleEvaluations = riskRules.stream()
-                .map(rule -> CompletableFuture
-                        .supplyAsync(() -> rule.evaluate(request), riskRuleExecutor)
-                        .orTimeout(timeout, TimeUnit.SECONDS)
-                        .exceptionally(exception -> new RiskRuleResult(
-                                rule.getRuleName(),
-                                reviewThreshold,
-                                RiskLevel.HIGH,
-                                "Rule failed or timed out"
-                        ))
-                )
-                .toList();
-
-        return ruleEvaluations.stream()
-                .map(CompletableFuture::join)
-                .toList();
     }
 
     private PaymentRisk toPaymentRisk(PaymentRiskRequest request, int riskScore, List<String> reasons) {

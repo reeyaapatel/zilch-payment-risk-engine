@@ -1,6 +1,6 @@
 package com.reeya.payment_risk_engine.rules;
 
-import com.reeya.payment_risk_engine.client.IpGeoLocationClient;
+import com.reeya.payment_risk_engine.client.IpGeoLocationProvider;
 import com.reeya.payment_risk_engine.model.RiskLevel;
 import com.reeya.payment_risk_engine.model.RiskRuleResult;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
@@ -24,13 +24,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class BuyerMerchantMismatchRuleTest {
 
     @Mock
-    private IpGeoLocationClient ipGeoLocationClient;
+    private IpGeoLocationProvider ipGeoLocationProvider;
 
     private BuyerMerchantMismatchRule rule;
 
     @BeforeEach
     public void setUp() {
-        rule = new BuyerMerchantMismatchRule(ipGeoLocationClient);
+        rule = new BuyerMerchantMismatchRule(ipGeoLocationProvider);
     }
 
     @ParameterizedTest
@@ -41,13 +41,13 @@ public class BuyerMerchantMismatchRuleTest {
             RiskRuleResult expectedResult
     ) {
         PaymentRiskRequest request = paymentRiskRequest(merchantCountryCode);
-        Mockito.when(ipGeoLocationClient.getCountryCode("1.2.3.4")).thenReturn(buyerCountryCode);
+        Mockito.when(ipGeoLocationProvider.getCountryCode("1.2.3.4")).thenReturn(buyerCountryCode);
 
         RiskRuleResult result = rule.evaluate(request);
 
         assertEquals(expectedResult, result);
-        Mockito.verify(ipGeoLocationClient).getCountryCode("1.2.3.4");
-        Mockito.verifyNoMoreInteractions(ipGeoLocationClient);
+        Mockito.verify(ipGeoLocationProvider).getCountryCode("1.2.3.4");
+        Mockito.verifyNoMoreInteractions(ipGeoLocationProvider);
     }
 
     private static Stream<Arguments> buyerMerchantCases() {
