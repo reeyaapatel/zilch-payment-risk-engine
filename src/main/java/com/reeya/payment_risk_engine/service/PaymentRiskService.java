@@ -65,7 +65,7 @@ public class PaymentRiskService {
             return toResponse(existingPayment.get());
         }
 
-        List<RiskRuleResult> results = evaluateRules(request);
+        List<RiskRuleResult> results = evaluateRulesAsynchronously(request);
         int riskScore = results.stream().mapToInt(RiskRuleResult::score).sum();
         List<String> reasons = results.stream().map(RiskRuleResult::reason).toList();
         PaymentRisk paymentRisk = toPaymentRisk(request, riskScore, reasons);
@@ -74,7 +74,7 @@ public class PaymentRiskService {
             entityManager.persist(paymentRisk);
             entityManager.flush();
         } catch (PersistenceException e) {
-            log.info("Failed to persist payment risk for payment id: {}", request.getPaymentId(), e);
+            log.error("Failed to persist payment risk for payment id: {}", request.getPaymentId(), e);
             return getPaymentRiskResponse(request.getPaymentId());
         }
 
@@ -112,7 +112,7 @@ public class PaymentRiskService {
                 .orElseThrow(() -> new IllegalArgumentException("Payment not found: " + paymentId));
     }
 
-    private List<RiskRuleResult> evaluateRules(PaymentRiskRequest request) {
+    private List<RiskRuleResult> evaluateRulesAsynchronously(PaymentRiskRequest request) {
         List<CompletableFuture<RiskRuleResult>> ruleEvaluations = riskRules.stream()
                 .map(rule -> CompletableFuture
                         .supplyAsync(() -> rule.evaluate(request), riskRuleExecutor)

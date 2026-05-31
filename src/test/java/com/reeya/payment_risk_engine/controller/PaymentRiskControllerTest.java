@@ -100,7 +100,7 @@ public class PaymentRiskControllerTest {
                 .customerId("CUSTOMER-001")
                 .businessDate(LocalDate.parse("2026-05-30"))
                 .amount(BigDecimal.ZERO)
-                .currency("") //-- IS BLANK
+                .currency("") // < -- IS BLANK ------
                 .merchantName("MARKS&SPENCER")
                 .merchantCountryCode("UK")
                 .buyerIp("1.2.3.4")

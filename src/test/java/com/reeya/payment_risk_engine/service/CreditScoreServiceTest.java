@@ -26,23 +26,25 @@ public class CreditScoreServiceTest {
 
     @Test
     public void getCreditScore_whenCustomerIdAndBusinessDateMatchUsesCachedScore() {
+        //GIVEN
         LocalDate businessDate = LocalDate.parse("2026-05-30");
         Mockito.when(creditScoreClient.calculateCreditScore("CUSTOMER-001", businessDate))
                 .thenReturn(OptionalInt.of(601));
-
+        //WHEN
         OptionalInt firstScore = creditScoreService.getCreditScore("CUSTOMER-001", businessDate);
         OptionalInt secondScore = creditScoreService.getCreditScore("CUSTOMER-001", businessDate);
 
-        assertEquals(firstScore, secondScore);
+        //THEN
         assertTrue(firstScore.isPresent());
         assertEquals(601, firstScore.getAsInt());
-        Mockito.verify(creditScoreClient).calculateCreditScore("CUSTOMER-001", businessDate);
+        assertEquals(firstScore, secondScore);
         Mockito.verify(creditScoreClient, times(1)).calculateCreditScore("CUSTOMER-001", businessDate);
         Mockito.verifyNoMoreInteractions(creditScoreClient);
     }
 
     @Test
     public void getCreditScore_whenBusinessDateIsDifferentCalculatesAgain() {
+        //GIVEN
         LocalDate firstBusinessDate = LocalDate.parse("2026-05-30");
         LocalDate secondBusinessDate = LocalDate.parse("2026-05-31");
         Mockito.when(creditScoreClient.calculateCreditScore("CUSTOMER-001", firstBusinessDate))
@@ -50,48 +52,56 @@ public class CreditScoreServiceTest {
         Mockito.when(creditScoreClient.calculateCreditScore("CUSTOMER-001", secondBusinessDate))
                 .thenReturn(OptionalInt.of(602));
 
+        //WHEN
         OptionalInt firstScore = creditScoreService.getCreditScore("CUSTOMER-001", firstBusinessDate);
         OptionalInt secondScore = creditScoreService.getCreditScore("CUSTOMER-001", secondBusinessDate);
 
+        //THEN
         assertTrue(firstScore.isPresent());
         assertTrue(secondScore.isPresent());
         assertEquals(601, firstScore.getAsInt());
         assertEquals(602, secondScore.getAsInt());
-        Mockito.verify(creditScoreClient).calculateCreditScore("CUSTOMER-001", firstBusinessDate);
-        Mockito.verify(creditScoreClient).calculateCreditScore("CUSTOMER-001", secondBusinessDate);
+        Mockito.verify(creditScoreClient, times(1)).calculateCreditScore("CUSTOMER-001", firstBusinessDate);
+        Mockito.verify(creditScoreClient, times(1)).calculateCreditScore("CUSTOMER-001", secondBusinessDate);
         Mockito.verifyNoMoreInteractions(creditScoreClient);
     }
 
     @Test
     public void getCreditScore_whenCustomerIdIsDifferentCalculatesAgain() {
+        //GIVEM
         LocalDate businessDate = LocalDate.parse("2026-05-30");
         Mockito.when(creditScoreClient.calculateCreditScore("CUSTOMER-001", businessDate))
                 .thenReturn(OptionalInt.of(601));
         Mockito.when(creditScoreClient.calculateCreditScore("CUSTOMER-002", businessDate))
                 .thenReturn(OptionalInt.of(602));
 
+        //WHEN
         OptionalInt firstScore = creditScoreService.getCreditScore("CUSTOMER-001", businessDate);
         OptionalInt secondScore = creditScoreService.getCreditScore("CUSTOMER-002", businessDate);
 
+        //THEN
         assertTrue(firstScore.isPresent());
         assertTrue(secondScore.isPresent());
         assertEquals(601, firstScore.getAsInt());
         assertEquals(602, secondScore.getAsInt());
-        Mockito.verify(creditScoreClient).calculateCreditScore("CUSTOMER-001", businessDate);
-        Mockito.verify(creditScoreClient).calculateCreditScore("CUSTOMER-002", businessDate);
+        Mockito.verify(creditScoreClient, times(1)).calculateCreditScore("CUSTOMER-001", businessDate);
+        Mockito.verify(creditScoreClient, times(1)).calculateCreditScore("CUSTOMER-002", businessDate);
         Mockito.verifyNoMoreInteractions(creditScoreClient);
     }
 
     @Test
     public void getCreditScore_whenScoreIsMissingDoesNotCacheMissingScore() {
+        //GIVEN
         LocalDate businessDate = LocalDate.parse("2026-05-30");
         Mockito.when(creditScoreClient.calculateCreditScore("CUSTOMER-001", businessDate))
                 .thenReturn(OptionalInt.empty())
                 .thenReturn(OptionalInt.of(601));
 
+        //WHEN
         OptionalInt firstScore = creditScoreService.getCreditScore("CUSTOMER-001", businessDate);
         OptionalInt secondScore = creditScoreService.getCreditScore("CUSTOMER-001", businessDate);
 
+        //THEN
         assertTrue(firstScore.isEmpty());
         assertTrue(secondScore.isPresent());
         assertEquals(601, secondScore.getAsInt());

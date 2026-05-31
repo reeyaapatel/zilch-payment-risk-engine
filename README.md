@@ -7,16 +7,15 @@ The business logic is intentionally simplified. In a real-world platform, risk d
 
 * **Strategy Pattern** – Each risk check implements `RiskRule`, making it easy to add new rules without changing the core assessment flow.
 * **Idempotency** – Payment assessments are keyed by `paymentId`, ensuring the same payment can be submitted multiple times without creating duplicate records or inconsistent outcomes. This is a common requirement in payment systems where retries may occur due to network failures or client timeouts.
-* **Parallel Execution** – Risk rules are executed using `CompletableFuture` and a dedicated thread pool to simulate independent verification checks running concurrently.
-* **Failure Handling** – Rule failures and timeouts generate a high-risk fallback result, ensuring uncertain payments are reviewed rather than automatically approved.
+* **Parallel Execution** – Risk rules are executed using `CompletableFuture` and a dedicated thread pool to simulate independent verification checks running concurrently. 
+* **Failure Handling** – Rule failures and timeouts generate a high-risk fallback result, ensuring uncertain payments are reviewed rather than automatically declined or not being processed due to individual rule errors. 
 * **Persistence** – H2 and Flyway are used to demonstrate persistence and schema versioning. A production system would likely use PostgreSQL.
 * **Caching** – Caffeine is used to cache external API responses and reduce repeated lookups. In a production environment, Redis would be a better choice as services are typically horizontally scaled and cached data may need to be shared across multiple application instances and consumers.
 * **Configuration** – Thresholds, executor settings, and external endpoints are configurable through application properties.
-* **Authentication** – API endpoints are secured with basic authentication. This is just for demo purposes to reflect API should be authenticated. In production, the authentication would be via and API gateway and JWT authentication
-
+* **Authentication** – API endpoints are secured with basic authentication for demonstration. In a production system, In production, authentication and authorization would typically be handled via an API gateway using OAuth2/JWT and service-to-service authentication.
 ## Process Flow
 
-High-level overview of the payment risk assessment process:
+High-level overview of the project payment risk assessment process:
 ```text
 API Client
     ↓
@@ -41,6 +40,21 @@ Persist Assessment
 Response
 ```
 
+## Current Risk Rules
+
+- `AmountRule`: scores payments based on amount thresholds.
+- `BuyerMerchantMismatchRule`: compares the buyer IP country code with the merchant country code.
+- `CreditScoreRule`: uses cached credit-score lookups to score customer credit risk.
+
+## Risk Scoring
+
+Each rule returns a risk score and reason. Scores are aggregated to produce an overall risk score which determines the payment outcome:
+
+- 0-39 → APPROVED
+- 40-69 → REQUIRES_REVIEW
+- 70+ → DECLINED
+
+The thresholds and scoring model are intentionally simple and are intended to demonstrate the risk assessment flow rather than represent a production-grade fraud model.
 
 
 ## Future Improvements
@@ -63,8 +77,8 @@ Response
 
 ### Resilience & Performance
 
-* Implement timeout and retry policies for external API calls. The current implementation applies timeouts at the rule execution level; in a production system, individual client calls should also have their own resilience policies.
-* Further optimise caching strategies for frequently accessed external data.
+* Futher optimise the cache strategies for recent payments and all frequently accessed external API responses with appropriate expiration policies.
+* Implement timeout and retry policies for external API calls. The current implementation applies timeouts at the rule execution level; in a production system, individual client calls should also have their own timeout policies.
 
 ### Security
 
@@ -81,22 +95,6 @@ Response
 
 * Add support for manual review workflows and status updates following investigation.
 
-
-## Current Risk Rules 
-
-- `AmountRule`: scores payments based on amount thresholds.
-- `BuyerMerchantMismatchRule`: compares the buyer IP country code with the merchant country code.
-- `CreditScoreRule`: uses cached credit-score lookups to score customer credit risk.
-
-## Risk Scoring
-
-Each rule returns a risk score and reason. Scores are aggregated to produce an overall risk score which determines the payment outcome:
-
-- 0-39 → APPROVED
-- 40-69 → REQUIRES_REVIEW
-- 70+ → DECLINED
-
-The thresholds and scoring model are intentionally simple and are intended to demonstrate the risk assessment flow rather than represent a production-grade fraud model.
 
 ## Run Locally
 

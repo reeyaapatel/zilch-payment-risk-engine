@@ -9,6 +9,7 @@ import java.util.List;
 
 /**
  * Converts list of strings to a single string separated by semicolon and vice versa.
+ * Improvement for the service would remove this as the table would store reasons in a child table with FK constraint
  */
 @Component
 @Converter

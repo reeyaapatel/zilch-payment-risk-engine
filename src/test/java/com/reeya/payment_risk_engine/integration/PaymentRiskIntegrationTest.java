@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.reeya.payment_risk_engine.client.IpGeoLocationClient;
 import com.reeya.payment_risk_engine.client.StubCreditScoreClient;
+import com.reeya.payment_risk_engine.model.Status;
+import com.reeya.payment_risk_engine.model.persistence.PaymentRisk;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +29,8 @@ import java.util.Optional;
 import java.util.OptionalInt;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -37,12 +42,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ContextConfiguration(initializers = PaymentRiskIntegrationTest.DatabaseInitializer.class)
 public class PaymentRiskIntegrationTest {
 
-    private static final String DATABASE_URL = "jdbc:h2:mem:payment-risk-integration;DB_CLOSE_DELAY=-1";
+
+    private static final String DATABASE_URL = "jdbc:h2:mem:payment-risk-integration;DB_CLOSE_DELAY=-1"; // -> test specific
     private static final String USERNAME = "admin";
     private static final String PASSWORD = "password";
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private EntityManager entityManager;
 
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule())
@@ -55,7 +64,7 @@ public class PaymentRiskIntegrationTest {
     private StubCreditScoreClient creditScoreClient;
 
     @Test
-    public void assessRisk_shouldPersistAndReturnPaymentRisk() throws Exception {
+    public void validate_IntegrationWithDatabaseAndAuthentication() throws Exception {
         LocalDate businessDate = LocalDate.parse("2026-05-30");
         Mockito.when(ipGeoLocationClient.getCountryCode("1.2.3.4"))
                 .thenReturn(Optional.of("GB"));
@@ -86,18 +95,28 @@ public class PaymentRiskIntegrationTest {
                 .andExpect(jsonPath("$.status").value("APPROVED"))
                 .andExpect(jsonPath("$.reasons", hasSize(3)));
 
-        mockMvc.perform(get("/payments/IT-PAY-001")
-                        .with(httpBasic(USERNAME, PASSWORD)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.paymentId").value("IT-PAY-001"))
-                .andExpect(jsonPath("$.customerId").value("CUSTOMER-001"))
-                .andExpect(jsonPath("$.businessDate").value("2026-05-30"))
-                .andExpect(jsonPath("$.status").value("APPROVED"))
-                .andExpect(jsonPath("$.reasons", hasSize(3)));
+
+        // Validate payment directly in db
+        PaymentRisk persistedPaymentRisk = entityManager.find(PaymentRisk.class, "IT-PAY-001");
+        assertNotNull(persistedPaymentRisk);
+        assertEquals("IT-PAY-001", persistedPaymentRisk.getPaymentId());
+        assertEquals("CUSTOMER-001", persistedPaymentRisk.getCustomerId());
+        assertEquals(businessDate, persistedPaymentRisk.getBusinessDate());
+        assertEquals(BigDecimal.valueOf(100), persistedPaymentRisk.getAmount());
+        assertEquals("GBP", persistedPaymentRisk.getCurrency());
+        assertEquals("ASOS", persistedPaymentRisk.getMerchantName());
+        assertEquals("GB", persistedPaymentRisk.getMerchantCountryCode());
+        assertEquals("1.2.3.4", persistedPaymentRisk.getBuyerIp());
+        assertEquals(0, persistedPaymentRisk.getRiskScore());
+        assertEquals(Status.APPROVED, persistedPaymentRisk.getStatus());
+        assertEquals(3, persistedPaymentRisk.getReasons().size());
+        assertNotNull(persistedPaymentRisk.getCreatedAt());
+        assertNotNull(persistedPaymentRisk.getLastUpdatedAt());
+
     }
 
     @Test
-    public void getPayment_whenAuthenticationIsMissingShouldReturnUnauthorized() throws Exception {
+    public void validate_WhenNotAuthenticationWithUsernameAndPassword() throws Exception {
         mockMvc.perform(get("/payments/IT-PAY-001"))
                 .andExpect(status().isUnauthorized());
     }

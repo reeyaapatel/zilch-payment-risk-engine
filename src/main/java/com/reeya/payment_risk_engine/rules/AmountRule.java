@@ -27,7 +27,8 @@ public class AmountRule implements RiskRule {
             @Value("${amount.medium.risk.amount}") BigDecimal mediumRiskAmount,
             @Value("${amount.high.risk.score}") int highRiskScore,
             @Value("${amount.medium.risk.score}") int mediumRiskScore) {
-        if (highRiskAmount == null || mediumRiskAmount == null || highRiskScore <= 0 || mediumRiskScore <= 0) {
+        if (highRiskAmount == null || mediumRiskAmount == null || highRiskScore <= 0 || mediumRiskScore <= 0
+                || highRiskAmount.compareTo(BigDecimal.ZERO) <= 0 || mediumRiskAmount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException(
                     "Invalid configuration for AmountRule: values must not be null and should be positive");
         }

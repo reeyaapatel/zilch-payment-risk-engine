@@ -19,41 +19,41 @@ public class CreditScoreRule implements RiskRule {
 
     private final CreditScoreService creditScoreService;
 
-    private final int lowCreditScoreThreshold;
+    private final int highRiskCreditScoreThreshold;
 
-    private final int mediumCreditScoreThreshold;
+    private final int mediumRiskCreditScoreThreshold;
 
-    private final int lowCreditScoreRiskValue;
+    private final int highRiskCreditScoreValue;
 
-    private final int mediumCreditScoreRiskValue;
+    private final int mediumRiskCreditScoreValue;
 
     public CreditScoreRule(
             CreditScoreService creditScoreService,
-            @Value("${low.credit.score.risk.threshold}") int lowCreditScoreThreshold,
-            @Value("${medium.credit.score.risk.threshold}") int mediumCreditScoreThreshold,
-            @Value("${low.credit.risk.value}") int lowCreditScoreRiskValue,
-            @Value("${medium.credit.risk.value}") int mediumCreditScoreRiskValue
+            @Value("${credit.high.risk.score.threshold}") int highRiskCreditScoreThreshold,
+            @Value("${credit.medium.risk.score.threshold}") int mediumRiskCreditScoreThreshold,
+            @Value("${credit.high.risk.value}") int highRiskCreditScoreValue,
+            @Value("${credit.medium.risk.value}") int mediumRiskCreditScoreValue
     ) {
-        if (lowCreditScoreThreshold <= 0
-                || mediumCreditScoreThreshold <= 0
-                || lowCreditScoreRiskValue <= 0
-                || mediumCreditScoreRiskValue <= 0) {
+        if (highRiskCreditScoreThreshold <= 0
+                || mediumRiskCreditScoreThreshold <= 0
+                || highRiskCreditScoreValue <= 0
+                || mediumRiskCreditScoreValue <= 0) {
             throw new IllegalArgumentException(
                     "Invalid Credit score rule configuration: must have positive thresholds and values");
         }
-        if (lowCreditScoreThreshold >= mediumCreditScoreThreshold) {
+        if (highRiskCreditScoreThreshold >= mediumRiskCreditScoreThreshold) {
             throw new IllegalArgumentException(
-                    "Invalid Credit score rule configuration: Low credit score threshold must be lower than medium credit score threshold");
+                    "Invalid Credit score rule configuration: High risk credit score threshold must be lower than medium risk credit score threshold");
         }
-        if (lowCreditScoreRiskValue <= mediumCreditScoreRiskValue) {
+        if (highRiskCreditScoreValue <= mediumRiskCreditScoreValue) {
             throw new IllegalArgumentException(
-                    "Invalid Credit score rule configuration: Low credit score value must be higher than medium credit score value");
+                    "Invalid Credit score rule configuration: High risk credit score value must be higher than medium risk credit score value");
         }
         this.creditScoreService = creditScoreService;
-        this.lowCreditScoreThreshold = lowCreditScoreThreshold;
-        this.mediumCreditScoreThreshold = mediumCreditScoreThreshold;
-        this.lowCreditScoreRiskValue = lowCreditScoreRiskValue;
-        this.mediumCreditScoreRiskValue = mediumCreditScoreRiskValue;
+        this.highRiskCreditScoreThreshold = highRiskCreditScoreThreshold;
+        this.mediumRiskCreditScoreThreshold = mediumRiskCreditScoreThreshold;
+        this.highRiskCreditScoreValue = highRiskCreditScoreValue;
+        this.mediumRiskCreditScoreValue = mediumRiskCreditScoreValue;
     }
 
     @Override
@@ -61,14 +61,14 @@ public class CreditScoreRule implements RiskRule {
         OptionalInt creditScore = creditScoreService.getCreditScore(request.getCustomerId(), request.getBusinessDate());
 
         if (creditScore.isEmpty()) {
-            return new RiskRuleResult(RULE_NAME, lowCreditScoreRiskValue, RiskLevel.HIGH, "Credit score not available");
+            return new RiskRuleResult(RULE_NAME, highRiskCreditScoreValue, RiskLevel.HIGH, "Credit score not available");
         }
-        if (creditScore.getAsInt() < lowCreditScoreThreshold) {
-            return new RiskRuleResult(RULE_NAME, lowCreditScoreRiskValue, RiskLevel.HIGH, "Credit score is high risk");
+        if (creditScore.getAsInt() < highRiskCreditScoreThreshold) {
+            return new RiskRuleResult(RULE_NAME, highRiskCreditScoreValue, RiskLevel.HIGH, "Credit score is high risk");
         }
 
-        if (creditScore.getAsInt() < mediumCreditScoreThreshold) {
-            return new RiskRuleResult(RULE_NAME, mediumCreditScoreRiskValue, RiskLevel.MEDIUM, "Credit score is medium risk");
+        if (creditScore.getAsInt() < mediumRiskCreditScoreThreshold) {
+            return new RiskRuleResult(RULE_NAME, mediumRiskCreditScoreValue, RiskLevel.MEDIUM, "Credit score is medium risk");
         }
 
         return new RiskRuleResult(RULE_NAME, 0, RiskLevel.LOW, "Credit score is low risk");
