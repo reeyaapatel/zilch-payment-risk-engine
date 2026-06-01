@@ -2,6 +2,7 @@ package com.reeya.payment_risk_engine.client;
 
 
 import com.reeya.payment_risk_engine.model.api.IpGeoLocationResponse;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -16,16 +17,14 @@ import java.util.Optional;
  */
 @Slf4j
 @Component
-public class IpGeoLocationClient {
+@AllArgsConstructor
+public class IpGeoLocationClient implements IpGeoLocationProvider {
 
     private final RestClient ipGeoLocationClient;
 
     private static final String SUCCESS = "success";
 
-    public IpGeoLocationClient(@Qualifier("ipGeoLocationRestClient") RestClient ipGeoLocationClient) {
-        this.ipGeoLocationClient = ipGeoLocationClient;
-    }
-
+    @Override
     public Optional<String> getCountryCode(String ipAddress) {
 
         try {
@@ -37,7 +36,7 @@ public class IpGeoLocationClient {
             if (response == null
                     || !SUCCESS.equalsIgnoreCase(response.status())
                     || !StringUtils.hasText(response.countryCode())) {
-                log.error("Invalid or missing IP geolocation data for IP: " + ipAddress);
+                log.error("Invalid or missing IP geolocation data for IP: {}", ipAddress);
                 return Optional.empty();
             }
 

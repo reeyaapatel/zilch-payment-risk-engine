@@ -15,4 +15,5 @@ CREATE TABLE PAYMENT_RISK
     created_at       TIMESTAMP NOT NULL,
     last_updated_at   TIMESTAMP NOT NULL,
     CONSTRAINT pk_payment_risk PRIMARY KEY (payment_id)
+-- apply grants when full schema with users is created
 );

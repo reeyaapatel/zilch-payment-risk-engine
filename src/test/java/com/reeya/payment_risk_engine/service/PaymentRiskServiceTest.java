@@ -1,13 +1,15 @@
 package com.reeya.payment_risk_engine.service;
 
-import com.reeya.payment_risk_engine.model.RiskLevel;
-import com.reeya.payment_risk_engine.model.RiskRuleResult;
-import com.reeya.payment_risk_engine.model.Status;
+import com.reeya.payment_risk_engine.model.risk.RiskLevel;
+import com.reeya.payment_risk_engine.model.risk.RiskRuleResult;
+import com.reeya.payment_risk_engine.model.risk.Status;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskResponse;
 import com.reeya.payment_risk_engine.model.api.PaymentStatusUpdate;
 import com.reeya.payment_risk_engine.model.persistence.PaymentRisk;
-import com.reeya.payment_risk_engine.rules.RiskRule;
+import com.reeya.payment_risk_engine.service.risk.RiskDecisionPolicy;
+import com.reeya.payment_risk_engine.service.risk.RiskRuleEvaluator;
+import com.reeya.payment_risk_engine.service.risk.RiskScoreCalculator;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceException;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,9 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Executor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -38,10 +38,13 @@ public class PaymentRiskServiceTest {
     private EntityManager entityManager;
 
     @Mock
-    private RiskRule riskRule1;
+    private RiskRuleEvaluator riskRuleEvaluator;
 
     @Mock
-    private RiskRule riskRule2;
+    private RiskDecisionPolicy riskDecisionPolicy;
+
+    @Mock
+    private RiskScoreCalculator riskScoreCalculator;
 
     private PaymentRiskService paymentRiskService;
 
@@ -49,17 +52,13 @@ public class PaymentRiskServiceTest {
 
     private final List<String> expectedReasons = List.of("Low risk", "IP mismatch");
     
-    private final Executor directExecutor = Runnable::run;
-
     @BeforeEach
     public void setUp() {
         paymentRiskService = new PaymentRiskService(
                 entityManager,
-                Arrays.asList(riskRule1, riskRule2),
-                directExecutor,
-                70,
-                40,
-                3);
+                riskRuleEvaluator,
+                riskDecisionPolicy,
+                riskScoreCalculator);
         paymentRiskRequest = PaymentRiskRequest.builder()
                 .paymentId("PAY-001")
                 .customerId("CUSTOMER-001")
@@ -73,82 +72,20 @@ public class PaymentRiskServiceTest {
     }
 
     @Test
-    public void assessRisk_whenRiskScoreAboveHighRiskThreshold() {
+    public void assessRisk_whenPaymentIsNewEvaluatesRulesCalculatesScoreDeterminesStatusAndPersists() {
         // GIVEN
-        mockRules(100, RiskLevel.HIGH);
+        mockRules(40, RiskLevel.HIGH);
+        mockScore(41);
+        mockDecision(41, Status.REQUIRES_REVIEW);
 
         // WHEN
         PaymentRiskResponse response = paymentRiskService.assessRisk(paymentRiskRequest);
 
         // THEN
         PaymentRisk savedPayment = getSavedPayment();
-        assertSavedPayment(savedPayment, 101, Status.DECLINED);
-        assertResponse(response, 101, Status.DECLINED);
-        verifyPaymentLookup(1);
-        verifyRuleCalls();
-    }
-
-    @Test
-    public void assessRisk_whenRiskScoreIsEqualToHighThreshold() {
-        // GIVEN
-        mockRules(69, RiskLevel.HIGH);
-
-        // WHEN
-        PaymentRiskResponse response = paymentRiskService.assessRisk(paymentRiskRequest);
-
-        // THEN
-        PaymentRisk savedPayment = getSavedPayment();
-        assertSavedPayment(savedPayment, 70, Status.DECLINED);
-        assertResponse(response, 70, Status.DECLINED);
-        verifyPaymentLookup(1);
-        verifyRuleCalls();
-    }
-
-    @Test
-    public void assessRisk_whenRiskScoreIsWithinMediumThreshold() {
-        // GIVEN
-        mockRules(42, RiskLevel.HIGH);
-
-        // WHEN
-        PaymentRiskResponse response = paymentRiskService.assessRisk(paymentRiskRequest);
-
-        // THEN
-        PaymentRisk savedPayment = getSavedPayment();
-        assertSavedPayment(savedPayment, 43, Status.REQUIRES_REVIEW);
-        assertResponse(response, 43, Status.REQUIRES_REVIEW);
-        verifyPaymentLookup(1);
-        verifyRuleCalls();
-    }
-
-    @Test
-    public void assessRisk_whenRiskScoreIsEqualToMediumThreshold() {
-        // GIVEN
-        mockRules(39, RiskLevel.HIGH);
-
-        // WHEN
-        PaymentRiskResponse response = paymentRiskService.assessRisk(paymentRiskRequest);
-
-        // THEN
-        PaymentRisk savedPayment = getSavedPayment();
-        assertSavedPayment(savedPayment, 40, Status.REQUIRES_REVIEW);
-        assertResponse(response, 40, Status.REQUIRES_REVIEW);
-        verifyPaymentLookup(1);
-        verifyRuleCalls();
-    }
-
-    @Test
-    public void assessRisk_whenRiskScoreIsWithinLowThreshold() {
-        // GIVEN
-        mockRules(10, RiskLevel.LOW);
-
-        // WHEN
-        PaymentRiskResponse response = paymentRiskService.assessRisk(paymentRiskRequest);
-
-        // THEN
-        PaymentRisk savedPayment = getSavedPayment();
-        assertSavedPayment(savedPayment, 11, Status.APPROVED);
-        assertResponse(response, 11, Status.APPROVED);
-        verifyPaymentLookup(1);
+        assertSavedPayment(savedPayment, 41, Status.REQUIRES_REVIEW);
+        assertResponse(response, 41, Status.REQUIRES_REVIEW);
+        verifyPaymentLookup();
         verifyRuleCalls();
     }
 
@@ -163,8 +100,10 @@ public class PaymentRiskServiceTest {
 
         // THEN
         assertStoredPaymentResponse(response, 40, Status.REQUIRES_REVIEW);
-        verifyPaymentLookup(1);
-        Mockito.verifyNoInteractions(riskRule1, riskRule2);
+        verifyPaymentLookup();
+        Mockito.verifyNoInteractions(riskRuleEvaluator);
+        Mockito.verifyNoInteractions(riskDecisionPolicy);
+        Mockito.verifyNoInteractions(riskScoreCalculator);
         Mockito.verifyNoMoreInteractions(entityManager);
     }
 
@@ -173,6 +112,8 @@ public class PaymentRiskServiceTest {
     public void assessRisk_whenPersistFlushFailsFetchesExistingPayment() {
         // GIVEN
         mockRules(39, RiskLevel.HIGH);
+        mockScore(40);
+        mockDecision(40, Status.REQUIRES_REVIEW);
         PaymentRisk storedPayment = paymentRisk(40, Status.REQUIRES_REVIEW);
         Mockito.doThrow(new PersistenceException("Duplicate payment"))
                 .when(entityManager)
@@ -195,6 +136,8 @@ public class PaymentRiskServiceTest {
     public void assessRisk_whenPersistFlushFailsAndPaymentDoesNotExistThrowsError() {
         // GIVEN
         mockRules(39, RiskLevel.HIGH);
+        mockScore(40);
+        mockDecision(40, Status.REQUIRES_REVIEW);
         Mockito.doThrow(new PersistenceException("Duplicate payment"))
                 .when(entityManager)
                 .flush();
@@ -216,39 +159,6 @@ public class PaymentRiskServiceTest {
         verifyRuleCalls();
     }
 
-    @Test
-    public void assessRisk_whenRuleFailsUsesHighRiskFallbackResult() {
-        // GIVEN
-        Mockito.when(riskRule1.evaluate(paymentRiskRequest))
-                .thenThrow(new IllegalStateException("Rule failed"));
-        Mockito.when(riskRule1.getRuleName()).thenReturn("BROKEN_RULE");
-        Mockito.when(riskRule2.evaluate(paymentRiskRequest))
-                .thenReturn(ruleResult("IP_CHECK", 1, RiskLevel.LOW, "IP matched"));
-
-        // WHEN
-        PaymentRiskResponse response = paymentRiskService.assessRisk(paymentRiskRequest);
-
-        // THEN
-        PaymentRisk savedPayment = getSavedPayment();
-
-        // validate the saved payment
-        assertEquals(41, savedPayment.getRiskScore());
-        assertEquals(Status.REQUIRES_REVIEW, savedPayment.getStatus());
-        assertEquals(List.of("Rule failed or timed out", "IP matched"), savedPayment.getReasons());
-
-        //validate the response
-        assertEquals(41, response.getRiskScore());
-        assertEquals(Status.REQUIRES_REVIEW, response.getStatus());
-        assertEquals(List.of("Rule failed or timed out", "IP matched"), response.getReasons());
-
-
-        verifyPaymentLookup(1);
-        Mockito.verify(riskRule1, times(1)).evaluate(paymentRiskRequest);
-        Mockito.verify(riskRule1, times(1)).getRuleName();
-        Mockito.verify(riskRule2, times(1)).evaluate(paymentRiskRequest);
-        Mockito.verify(entityManager, times(1)).flush();
-        Mockito.verifyNoMoreInteractions(entityManager, riskRule1, riskRule2);
-    }
 
     @Test
     public void getPaymentRiskResponse_whenPaymentDoesNotExistThrowsError() {
@@ -264,7 +174,9 @@ public class PaymentRiskServiceTest {
         // THEN
         assertEquals("Payment not found: missing-id", exception.getMessage());
         Mockito.verify(entityManager, times(1)).find(PaymentRisk.class, "missing-id");
-        Mockito.verifyNoInteractions(riskRule1, riskRule2);
+        Mockito.verifyNoInteractions(riskRuleEvaluator);
+        Mockito.verifyNoInteractions(riskDecisionPolicy);
+        Mockito.verifyNoInteractions(riskScoreCalculator);
         Mockito.verifyNoMoreInteractions(entityManager);
     }
 
@@ -290,7 +202,9 @@ public class PaymentRiskServiceTest {
         assertEquals(storedPayment.getLastUpdatedAt(), response.getLastUpdatedAt());
         Mockito.verify(entityManager, times(1)).find(PaymentRisk.class, "PAY-001");
         Mockito.verify(entityManager, times(1)).flush();
-        Mockito.verifyNoInteractions(riskRule1, riskRule2);
+        Mockito.verifyNoInteractions(riskRuleEvaluator);
+        Mockito.verifyNoInteractions(riskDecisionPolicy);
+        Mockito.verifyNoInteractions(riskScoreCalculator);
         Mockito.verifyNoMoreInteractions(entityManager);
     }
 
@@ -311,7 +225,9 @@ public class PaymentRiskServiceTest {
         assertEquals("Payment status can only be updated when it requires review", exception.getMessage());
         assertEquals(Status.APPROVED, storedPayment.getStatus());
         Mockito.verify(entityManager, times(1)).find(PaymentRisk.class, "PAY-001");
-        Mockito.verifyNoInteractions(riskRule1, riskRule2);
+        Mockito.verifyNoInteractions(riskRuleEvaluator);
+        Mockito.verifyNoInteractions(riskDecisionPolicy);
+        Mockito.verifyNoInteractions(riskScoreCalculator);
         Mockito.verifyNoMoreInteractions(entityManager);
     }
 
@@ -332,7 +248,9 @@ public class PaymentRiskServiceTest {
         assertEquals("Payment status can only be updated when it requires review", exception.getMessage());
         assertEquals(Status.DECLINED, storedPayment.getStatus());
         Mockito.verify(entityManager, times(1)).find(PaymentRisk.class, "PAY-001");
-        Mockito.verifyNoInteractions(riskRule1, riskRule2);
+        Mockito.verifyNoInteractions(riskRuleEvaluator);
+        Mockito.verifyNoInteractions(riskDecisionPolicy);
+        Mockito.verifyNoInteractions(riskScoreCalculator);
         Mockito.verifyNoMoreInteractions(entityManager);
     }
 
@@ -351,7 +269,9 @@ public class PaymentRiskServiceTest {
         // THEN
         assertEquals("Payment not found: doesnt-exist-id", exception.getMessage());
         Mockito.verify(entityManager).find(PaymentRisk.class, "doesnt-exist-id");
-        Mockito.verifyNoInteractions(riskRule1, riskRule2);
+        Mockito.verifyNoInteractions(riskRuleEvaluator);
+        Mockito.verifyNoInteractions(riskDecisionPolicy);
+        Mockito.verifyNoInteractions(riskScoreCalculator);
         Mockito.verifyNoMoreInteractions(entityManager);
     }
 
@@ -368,16 +288,72 @@ public class PaymentRiskServiceTest {
 
         // THEN
         assertEquals("Payment id is required", exception.getMessage());
-        Mockito.verifyNoInteractions(entityManager, riskRule1, riskRule2);
+        Mockito.verifyNoInteractions(entityManager, riskRuleEvaluator, riskDecisionPolicy, riskScoreCalculator);
+    }
+
+    @Test
+    public void constructor_whenEntityManagerIsNullThrowsError() {
+        // WHEN
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new PaymentRiskService(null, riskRuleEvaluator, riskDecisionPolicy, riskScoreCalculator)
+        );
+
+        // THEN
+        assertEquals("EntityManager must not be null", exception.getMessage());
+    }
+
+    @Test
+    public void constructor_whenRiskRuleEvaluatorIsNullThrowsError() {
+        // WHEN
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new PaymentRiskService(entityManager, null, riskDecisionPolicy, riskScoreCalculator)
+        );
+
+        // THEN
+        assertEquals("RiskRuleEvaluator must not be null", exception.getMessage());
+    }
+
+    @Test
+    public void constructor_whenRiskDecisionPolicyIsNullThrowsError() {
+        // WHEN
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new PaymentRiskService(entityManager, riskRuleEvaluator, null, riskScoreCalculator)
+        );
+
+        // THEN
+        assertEquals("RiskDecisionPolicy must not be null", exception.getMessage());
+    }
+
+    @Test
+    public void constructor_whenRiskScoreCalculatorIsNullThrowsError() {
+        // WHEN
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new PaymentRiskService(entityManager, riskRuleEvaluator, riskDecisionPolicy, null)
+        );
+
+        // THEN
+        assertEquals("RiskScoreCalculator must not be null", exception.getMessage());
     }
 
     private void mockRules(int secondScore, RiskLevel secondRiskLevel) {
-        Mockito.when(riskRule1.evaluate(paymentRiskRequest))
-                .thenReturn(ruleResult("AMOUNT_RULE", 1, RiskLevel.LOW, "Low risk"));
-        Mockito.when(riskRule2.evaluate(paymentRiskRequest))
-                .thenReturn(ruleResult("IP_CHECK", secondScore, secondRiskLevel, "IP mismatch"));
+        Mockito.when(riskRuleEvaluator.evaluate(paymentRiskRequest))
+                .thenReturn(List.of(
+                        ruleResult("AMOUNT_RULE", 1, RiskLevel.LOW, "Low risk"),
+                        ruleResult("IP_CHECK", secondScore, secondRiskLevel, "IP mismatch")
+                ));
     }
 
+    private void mockScore(int riskScore) {
+        Mockito.when(riskScoreCalculator.calculate(Mockito.anyList())).thenReturn(riskScore);
+    }
+
+    private void mockDecision(int riskScore, Status status) {
+        Mockito.when(riskDecisionPolicy.determineDecision(riskScore)).thenReturn(status);
+    }
 
     private PaymentRisk getSavedPayment() {
         ArgumentCaptor<PaymentRisk> captor = ArgumentCaptor.forClass(PaymentRisk.class);
@@ -385,15 +361,16 @@ public class PaymentRiskServiceTest {
         return captor.getValue();
     }
 
-    private void verifyPaymentLookup(int times) {
-        Mockito.verify(entityManager, times(times)).find(PaymentRisk.class, "PAY-001");
+    private void verifyPaymentLookup() {
+        Mockito.verify(entityManager, times(1)).find(PaymentRisk.class, "PAY-001");
     }
 
     private void verifyRuleCalls() {
-        Mockito.verify(riskRule1, times(1)).evaluate(paymentRiskRequest);
-        Mockito.verify(riskRule2, times(1)).evaluate(paymentRiskRequest);
+        Mockito.verify(riskRuleEvaluator, times(1)).evaluate(paymentRiskRequest);
+        Mockito.verify(riskScoreCalculator, times(1)).calculate(Mockito.anyList());
+        Mockito.verify(riskDecisionPolicy, times(1)).determineDecision(Mockito.anyInt());
         Mockito.verify(entityManager, times(1)).flush();
-        Mockito.verifyNoMoreInteractions(entityManager, riskRule1, riskRule2);
+        Mockito.verifyNoMoreInteractions(entityManager, riskRuleEvaluator, riskDecisionPolicy, riskScoreCalculator);
     }
 
     private void assertSavedPayment(PaymentRisk savedPayment, int expectedRiskScore, Status expectedStatus) {

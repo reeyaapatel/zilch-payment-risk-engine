@@ -1,26 +1,23 @@
 package com.reeya.payment_risk_engine.service;
 
-import com.reeya.payment_risk_engine.model.RiskLevel;
-import com.reeya.payment_risk_engine.model.RiskRuleResult;
-import com.reeya.payment_risk_engine.model.Status;
+import com.reeya.payment_risk_engine.model.risk.RiskRuleResult;
+import com.reeya.payment_risk_engine.model.risk.Status;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskResponse;
 import com.reeya.payment_risk_engine.model.api.PaymentStatusUpdate;
 import com.reeya.payment_risk_engine.model.persistence.PaymentRisk;
-import com.reeya.payment_risk_engine.rules.RiskRule;
+import com.reeya.payment_risk_engine.service.risk.RiskDecisionPolicy;
+import com.reeya.payment_risk_engine.service.risk.RiskRuleEvaluator;
+import com.reeya.payment_risk_engine.service.risk.RiskScoreCalculator;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Service to manage payment risk assessment and status updates.
@@ -30,32 +27,33 @@ import java.util.concurrent.TimeUnit;
 public class PaymentRiskService {
 
     private final EntityManager entityManager;
-    private final List<RiskRule> riskRules;
-    private final Executor riskRuleExecutor;
-    private final int declineThreshold;
-    private final int reviewThreshold;
-    private final int timeout;
+    private final RiskRuleEvaluator riskRuleEvaluator;
+    private final RiskDecisionPolicy riskDecisionPolicy;
+    private final RiskScoreCalculator riskScoreCalculator;
 
     public PaymentRiskService(
             EntityManager entityManager,
-            List<RiskRule> riskRules,
-            Executor riskRuleExecutor,
-            @Value("${payment.risk.decline.threshold}") int declineThreshold,
-            @Value("${payment.risk.review.threshold}") int reviewThreshold,
-            @Value("${payment.risk.review.timeout}") int timeout
+            RiskRuleEvaluator riskRuleEvaluator,
+            RiskDecisionPolicy riskDecisionPolicy,
+            RiskScoreCalculator riskScoreCalculator
     ) {
+        if (entityManager == null) {
+            throw new IllegalArgumentException("EntityManager must not be null");
+        }
+        if (riskRuleEvaluator == null) {
+            throw new IllegalArgumentException("RiskRuleEvaluator must not be null");
+        }
+        if (riskDecisionPolicy == null) {
+            throw new IllegalArgumentException("RiskDecisionPolicy must not be null");
+        }
+        if (riskScoreCalculator == null) {
+            throw new IllegalArgumentException("RiskScoreCalculator must not be null");
+        }
+
         this.entityManager = entityManager;
-        this.riskRules = riskRules;
-        this.riskRuleExecutor = riskRuleExecutor;
-        if (declineThreshold < 0 || reviewThreshold < 0 || timeout <= 0) {
-            throw new IllegalArgumentException("Thresholds must be non-negative and timeout must be positive");
-        }
-        if (reviewThreshold >= declineThreshold) {
-            throw new IllegalArgumentException("Review threshold must be lower than decline threshold");
-        }
-        this.declineThreshold = declineThreshold;
-        this.reviewThreshold = reviewThreshold;
-        this.timeout = timeout;
+        this.riskRuleEvaluator = riskRuleEvaluator;
+        this.riskDecisionPolicy = riskDecisionPolicy;
+        this.riskScoreCalculator = riskScoreCalculator;
     }
 
     @Transactional
@@ -65,8 +63,8 @@ public class PaymentRiskService {
             return toResponse(existingPayment.get());
         }
 
-        List<RiskRuleResult> results = evaluateRulesAsynchronously(request);
-        int riskScore = results.stream().mapToInt(RiskRuleResult::score).sum();
+        List<RiskRuleResult> results = riskRuleEvaluator.evaluate(request);
+        int riskScore = riskScoreCalculator.calculate(results);
         List<String> reasons = results.stream().map(RiskRuleResult::reason).toList();
         PaymentRisk paymentRisk = toPaymentRisk(request, riskScore, reasons);
 
@@ -112,25 +110,6 @@ public class PaymentRiskService {
                 .orElseThrow(() -> new IllegalArgumentException("Payment not found: " + paymentId));
     }
 
-    private List<RiskRuleResult> evaluateRulesAsynchronously(PaymentRiskRequest request) {
-        List<CompletableFuture<RiskRuleResult>> ruleEvaluations = riskRules.stream()
-                .map(rule -> CompletableFuture
-                        .supplyAsync(() -> rule.evaluate(request), riskRuleExecutor)
-                        .orTimeout(timeout, TimeUnit.SECONDS)
-                        .exceptionally(exception -> new RiskRuleResult(
-                                rule.getRuleName(),
-                                reviewThreshold,
-                                RiskLevel.HIGH,
-                                "Rule failed or timed out"
-                        ))
-                )
-                .toList();
-
-        return ruleEvaluations.stream()
-                .map(CompletableFuture::join)
-                .toList();
-    }
-
     private PaymentRisk toPaymentRisk(PaymentRiskRequest request, int riskScore, List<String> reasons) {
         Instant now = Instant.now();
         return PaymentRisk.builder()
@@ -170,12 +149,6 @@ public class PaymentRiskService {
     }
 
     private Status determineDecision(int score) {
-        if (score >= declineThreshold) {
-            return Status.DECLINED;
-        }
-        if (score >= reviewThreshold) {
-            return Status.REQUIRES_REVIEW;
-        }
-        return Status.APPROVED;
+        return riskDecisionPolicy.determineDecision(score);
     }
 }

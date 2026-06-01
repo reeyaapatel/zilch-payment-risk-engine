@@ -1,4 +1,4 @@
-package com.reeya.payment_risk_engine.model;
+package com.reeya.payment_risk_engine.model.risk;
 
 /**
  * Output from a risk rule.
