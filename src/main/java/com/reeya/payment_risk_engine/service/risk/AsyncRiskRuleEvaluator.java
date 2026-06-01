@@ -26,8 +26,8 @@ public class AsyncRiskRuleEvaluator implements RiskRuleEvaluator {
     public AsyncRiskRuleEvaluator(
             List<RiskRule> riskRules,
             Executor riskRuleExecutor,
-            @Value("${payment.risk.review.threshold}") int fallbackScore,
-            @Value("${payment.risk.review.timeout}") int timeout
+            @Value("${risk.rule.evaluator.review.threshold}") int fallbackScore,
+            @Value("${risk.rule.evaluator.timeout.value}") int timeout
     ) {
         if (riskRules == null || riskRules.isEmpty()) {
             throw new IllegalArgumentException("At least one risk rule must be provided");

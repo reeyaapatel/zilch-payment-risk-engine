@@ -11,8 +11,8 @@ public class SimpleThresholdRiskDecisionPolicy implements RiskDecisionPolicy {
     private final int reviewThreshold;
 
     public SimpleThresholdRiskDecisionPolicy(
-            @Value("${payment.risk.decline.threshold}") int declineThreshold,
-            @Value("${payment.risk.review.threshold}") int reviewThreshold
+            @Value("${risk.rule.evaluator.decline.threshold}") int declineThreshold,
+            @Value("${risk.rule.evaluator.review.threshold}") int reviewThreshold
     ) {
         if (declineThreshold < 0 || reviewThreshold < 0) {
             throw new IllegalArgumentException("Thresholds must be non-negative");

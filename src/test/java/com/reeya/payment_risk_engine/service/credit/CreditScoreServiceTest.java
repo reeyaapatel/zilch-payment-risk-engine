@@ -4,7 +4,10 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.reeya.payment_risk_engine.client.CreditScoreClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.OptionalInt;
@@ -13,14 +16,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.times;
 
+@ExtendWith(MockitoExtension.class)
 public class CreditScoreServiceTest {
 
+    @Mock
     private CreditScoreClient creditScoreClient;
+
     private CreditScoreService creditScoreService;
 
     @BeforeEach
     public void setUp() {
-        creditScoreClient = Mockito.mock(CreditScoreClient.class);
         creditScoreService = new CreditScoreService(Caffeine.newBuilder().build(), creditScoreClient);
     }
 

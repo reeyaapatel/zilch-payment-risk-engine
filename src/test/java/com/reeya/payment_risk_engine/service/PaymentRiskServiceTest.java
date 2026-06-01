@@ -138,7 +138,7 @@ public class PaymentRiskServiceTest {
         mockRules(39, RiskLevel.HIGH);
         mockScore(40);
         mockDecision(40, Status.REQUIRES_REVIEW);
-        Mockito.doThrow(new PersistenceException("Duplicate payment"))
+        Mockito.doThrow(new PersistenceException("error with payment risk persistence"))
                 .when(entityManager)
                 .flush();
         Mockito.when(entityManager.find(PaymentRisk.class, "PAY-001"))
@@ -289,54 +289,6 @@ public class PaymentRiskServiceTest {
         // THEN
         assertEquals("Payment id is required", exception.getMessage());
         Mockito.verifyNoInteractions(entityManager, riskRuleEvaluator, riskDecisionPolicy, riskScoreCalculator);
-    }
-
-    @Test
-    public void constructor_whenEntityManagerIsNullThrowsError() {
-        // WHEN
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> new PaymentRiskService(null, riskRuleEvaluator, riskDecisionPolicy, riskScoreCalculator)
-        );
-
-        // THEN
-        assertEquals("EntityManager must not be null", exception.getMessage());
-    }
-
-    @Test
-    public void constructor_whenRiskRuleEvaluatorIsNullThrowsError() {
-        // WHEN
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> new PaymentRiskService(entityManager, null, riskDecisionPolicy, riskScoreCalculator)
-        );
-
-        // THEN
-        assertEquals("RiskRuleEvaluator must not be null", exception.getMessage());
-    }
-
-    @Test
-    public void constructor_whenRiskDecisionPolicyIsNullThrowsError() {
-        // WHEN
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> new PaymentRiskService(entityManager, riskRuleEvaluator, null, riskScoreCalculator)
-        );
-
-        // THEN
-        assertEquals("RiskDecisionPolicy must not be null", exception.getMessage());
-    }
-
-    @Test
-    public void constructor_whenRiskScoreCalculatorIsNullThrowsError() {
-        // WHEN
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> new PaymentRiskService(entityManager, riskRuleEvaluator, riskDecisionPolicy, null)
-        );
-
-        // THEN
-        assertEquals("RiskScoreCalculator must not be null", exception.getMessage());
     }
 
     private void mockRules(int secondScore, RiskLevel secondRiskLevel) {

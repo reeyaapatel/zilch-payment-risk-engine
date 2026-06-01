@@ -2,70 +2,28 @@ package com.reeya.payment_risk_engine.service.risk;
 
 import com.reeya.payment_risk_engine.model.risk.Status;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class SimpleThresholdRiskDecisionPolicyTest {
 
-    @Test
-    public void determineDecision_whenRiskScoreAboveDeclineThresholdReturnsDeclined() {
+    @ParameterizedTest
+    @MethodSource("decisionCases")
+    public void determineDecision_shouldReturnExpectedStatus(int riskScore, Status expectedStatus) {
         // GIVEN
         SimpleThresholdRiskDecisionPolicy policy = new SimpleThresholdRiskDecisionPolicy(70, 40);
 
         // WHEN
-        Status status = policy.determineDecision(101);
+        Status status = policy.determineDecision(riskScore);
 
         // THEN
-        assertEquals(Status.DECLINED, status);
-    }
-
-    @Test
-    public void determineDecision_whenRiskScoreEqualsDeclineThresholdReturnsDeclined() {
-        // GIVEN
-        SimpleThresholdRiskDecisionPolicy policy = new SimpleThresholdRiskDecisionPolicy(70, 40);
-
-        // WHEN
-        Status status = policy.determineDecision(70);
-
-        // THEN
-        assertEquals(Status.DECLINED, status);
-    }
-
-    @Test
-    public void determineDecision_whenRiskScoreIsWithinReviewThresholdReturnsRequiresReview() {
-        // GIVEN
-        SimpleThresholdRiskDecisionPolicy policy = new SimpleThresholdRiskDecisionPolicy(70, 40);
-
-        // WHEN
-        Status status = policy.determineDecision(43);
-
-        // THEN
-        assertEquals(Status.REQUIRES_REVIEW, status);
-    }
-
-    @Test
-    public void determineDecision_whenRiskScoreEqualsReviewThresholdReturnsRequiresReview() {
-        // GIVEN
-        SimpleThresholdRiskDecisionPolicy policy = new SimpleThresholdRiskDecisionPolicy(70, 40);
-
-        // WHEN
-        Status status = policy.determineDecision(40);
-
-        // THEN
-        assertEquals(Status.REQUIRES_REVIEW, status);
-    }
-
-    @Test
-    public void determineDecision_whenRiskScoreIsBelowReviewThresholdReturnsApproved() {
-        // GIVEN
-        SimpleThresholdRiskDecisionPolicy policy = new SimpleThresholdRiskDecisionPolicy(70, 40);
-
-        // WHEN
-        Status status = policy.determineDecision(11);
-
-        // THEN
-        assertEquals(Status.APPROVED, status);
+        assertEquals(expectedStatus, status);
     }
 
     @Test
@@ -114,5 +72,15 @@ public class SimpleThresholdRiskDecisionPolicyTest {
 
         // THEN
         assertEquals("Review threshold must be lower than decline threshold", exception.getMessage());
+    }
+
+    private static Stream<Arguments> decisionCases() {
+        return Stream.of(
+                Arguments.of(101, Status.DECLINED),
+                Arguments.of(70, Status.DECLINED),
+                Arguments.of(43, Status.REQUIRES_REVIEW),
+                Arguments.of(40, Status.REQUIRES_REVIEW),
+                Arguments.of(11, Status.APPROVED)
+        );
     }
 }

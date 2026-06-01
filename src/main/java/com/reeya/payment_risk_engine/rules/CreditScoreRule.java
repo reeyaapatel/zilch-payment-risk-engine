@@ -29,10 +29,10 @@ public class CreditScoreRule implements RiskRule {
 
     public CreditScoreRule(
             CreditScoreService creditScoreService,
-            @Value("${credit.high.risk.score.threshold}") int highRiskCreditScoreThreshold,
-            @Value("${credit.medium.risk.score.threshold}") int mediumRiskCreditScoreThreshold,
-            @Value("${credit.high.risk.value}") int highRiskCreditScoreValue,
-            @Value("${credit.medium.risk.value}") int mediumRiskCreditScoreValue
+            @Value("${credit.score.high.risk.score.threshold}") int highRiskCreditScoreThreshold,
+            @Value("${credit.score.medium.risk.score.threshold}") int mediumRiskCreditScoreThreshold,
+            @Value("${credit.score.high.risk.value}") int highRiskCreditScoreValue,
+            @Value("${credit.score.medium.risk.value}") int mediumRiskCreditScoreValue
     ) {
         if (highRiskCreditScoreThreshold <= 0
                 || mediumRiskCreditScoreThreshold <= 0
