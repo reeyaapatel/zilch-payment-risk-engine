@@ -1,7 +1,8 @@
 package com.reeya.payment_risk_engine.service;
 
-import com.reeya.payment_risk_engine.model.RiskLevel;
-import com.reeya.payment_risk_engine.model.RiskRuleResult;
+import com.reeya.payment_risk_engine.model.risk.RiskLevel;
+import com.reeya.payment_risk_engine.model.risk.RiskRuleResult;
+import com.reeya.payment_risk_engine.service.risk.SimpleSumRiskScoreCalculator;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

@@ -1,9 +1,9 @@
 package com.reeya.payment_risk_engine.rules;
 
-import com.reeya.payment_risk_engine.model.RiskLevel;
-import com.reeya.payment_risk_engine.model.RiskRuleResult;
+import com.reeya.payment_risk_engine.model.risk.RiskLevel;
+import com.reeya.payment_risk_engine.model.risk.RiskRuleResult;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
-import com.reeya.payment_risk_engine.service.CreditScoreService;
+import com.reeya.payment_risk_engine.service.credit.CreditScoreService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 

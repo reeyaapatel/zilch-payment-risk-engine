@@ -1,6 +1,6 @@
 package com.reeya.payment_risk_engine.model.persistence;
 
-import com.reeya.payment_risk_engine.model.Status;
+import com.reeya.payment_risk_engine.model.risk.Status;
 import com.reeya.payment_risk_engine.model.functions.StringListConverter;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;

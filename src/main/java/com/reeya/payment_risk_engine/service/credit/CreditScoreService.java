@@ -1,4 +1,4 @@
-package com.reeya.payment_risk_engine.service;
+package com.reeya.payment_risk_engine.service.credit;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.reeya.payment_risk_engine.client.CreditScoreClient;

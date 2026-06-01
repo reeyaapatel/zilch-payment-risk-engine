@@ -6,7 +6,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.reeya.payment_risk_engine.config.SecurityConfig;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskResponse;
-import com.reeya.payment_risk_engine.model.Status;
+import com.reeya.payment_risk_engine.model.risk.Status;
 import com.reeya.payment_risk_engine.model.api.PaymentStatusUpdate;
 import com.reeya.payment_risk_engine.service.PaymentRiskService;
 import org.junit.jupiter.api.Test;

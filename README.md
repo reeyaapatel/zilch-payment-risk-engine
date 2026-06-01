@@ -33,9 +33,9 @@ Risk Rules (executed in parallel)
                                          Caffeine Cache (for credit score lookups)
 
     ↓
-Aggregate Risk Score
+RiskScoreCalculator
     ↓
-Determine Status
+RiskDecisionPolicy
     ↓
 Persist Assessment
     ↓
@@ -43,21 +43,12 @@ Response
 ```
 
 ## Current Risk Rules
-
+The current implementation includes three risk rules:
 - `AmountRule`: scores payments based on amount thresholds.
 - `BuyerMerchantMismatchRule`: compares the buyer IP country code with the merchant country code.
 - `CreditScoreRule`: uses cached credit-score lookups to score customer credit risk.
 
-## Risk Scoring
-
-Each rule returns a risk score and reason. Scores are aggregated to produce an overall risk score which determines the payment outcome:
-
-- 0-39 → APPROVED
-- 40-69 → REQUIRES_REVIEW
-- 70+ → DECLINED
-
-The thresholds and scoring model are intentionally simple and are intended to demonstrate the risk assessment flow rather than represent a production-grade fraud model.
-
+`SimpleSumRiskScoreCalculator` and `SimpleThresholdRiskDecisionPolicy` are used to calculate and apply risk scores.
 
 ## Future Improvements
 

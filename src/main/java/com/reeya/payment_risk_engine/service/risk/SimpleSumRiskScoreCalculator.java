@@ -1,6 +1,6 @@
-package com.reeya.payment_risk_engine.service;
+package com.reeya.payment_risk_engine.service.risk;
 
-import com.reeya.payment_risk_engine.model.RiskRuleResult;
+import com.reeya.payment_risk_engine.model.risk.RiskRuleResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

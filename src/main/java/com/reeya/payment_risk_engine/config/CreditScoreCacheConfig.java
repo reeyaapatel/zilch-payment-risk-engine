@@ -2,7 +2,7 @@ package com.reeya.payment_risk_engine.config;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.reeya.payment_risk_engine.service.CreditScoreCacheKey;
+import com.reeya.payment_risk_engine.service.credit.CreditScoreCacheKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

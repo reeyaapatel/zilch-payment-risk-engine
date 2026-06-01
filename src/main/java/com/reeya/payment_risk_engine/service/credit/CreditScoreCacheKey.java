@@ -1,4 +1,4 @@
-package com.reeya.payment_risk_engine.service;
+package com.reeya.payment_risk_engine.service.credit;
 
 import java.time.LocalDate;
 

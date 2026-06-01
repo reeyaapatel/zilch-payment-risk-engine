@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.reeya.payment_risk_engine.client.IpGeoLocationClient;
 import com.reeya.payment_risk_engine.client.StubCreditScoreClient;
-import com.reeya.payment_risk_engine.model.Status;
+import com.reeya.payment_risk_engine.model.risk.Status;
 import com.reeya.payment_risk_engine.model.persistence.PaymentRisk;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;

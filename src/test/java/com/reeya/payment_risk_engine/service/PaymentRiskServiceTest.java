@@ -1,12 +1,15 @@
 package com.reeya.payment_risk_engine.service;
 
-import com.reeya.payment_risk_engine.model.RiskLevel;
-import com.reeya.payment_risk_engine.model.RiskRuleResult;
-import com.reeya.payment_risk_engine.model.Status;
+import com.reeya.payment_risk_engine.model.risk.RiskLevel;
+import com.reeya.payment_risk_engine.model.risk.RiskRuleResult;
+import com.reeya.payment_risk_engine.model.risk.Status;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskResponse;
 import com.reeya.payment_risk_engine.model.api.PaymentStatusUpdate;
 import com.reeya.payment_risk_engine.model.persistence.PaymentRisk;
+import com.reeya.payment_risk_engine.service.risk.RiskDecisionPolicy;
+import com.reeya.payment_risk_engine.service.risk.RiskRuleEvaluator;
+import com.reeya.payment_risk_engine.service.risk.RiskScoreCalculator;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceException;
 import org.junit.jupiter.api.BeforeEach;

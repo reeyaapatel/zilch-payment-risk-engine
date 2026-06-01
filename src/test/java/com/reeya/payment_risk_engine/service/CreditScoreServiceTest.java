@@ -2,6 +2,7 @@ package com.reeya.payment_risk_engine.service;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.reeya.payment_risk_engine.client.CreditScoreClient;
+import com.reeya.payment_risk_engine.service.credit.CreditScoreService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

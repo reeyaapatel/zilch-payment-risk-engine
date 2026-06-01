@@ -1,8 +1,8 @@
 package com.reeya.payment_risk_engine.rules;
 
 import com.reeya.payment_risk_engine.client.IpGeoLocationProvider;
-import com.reeya.payment_risk_engine.model.RiskLevel;
-import com.reeya.payment_risk_engine.model.RiskRuleResult;
+import com.reeya.payment_risk_engine.model.risk.RiskLevel;
+import com.reeya.payment_risk_engine.model.risk.RiskRuleResult;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
