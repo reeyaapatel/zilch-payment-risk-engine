@@ -95,6 +95,7 @@ The current implementation includes three risk rules:
 ```bash
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ```
+or via IntelliJ IDEA run config with -Dspring-boot.run.profiles=dev program args
 
 File-based H2 database configured in `src/main/resources/application-dev.properties`.
 
