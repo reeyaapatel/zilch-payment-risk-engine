@@ -21,7 +21,7 @@ public class SecurityConfig {
                 .headers(headers -> headers
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/h2-console/**").permitAll() // avoid auth for h2 for demo
                         .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults())
                 .build();

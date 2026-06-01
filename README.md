@@ -123,7 +123,7 @@ For local development, you can run migrations against the file-based H2 database
 ```
 
 ## H2 Console
-When accessing H2 use admin/password credentials.
+
 ```text
 URL: http://localhost:8080/h2-console
 JDBC URL: jdbc:h2:file:./data/riskdb
