@@ -13,23 +13,29 @@ import java.util.concurrent.Executor;
 @Configuration
 public class RiskRuleExecutorConfig {
 
-    @Value("${risk.rule.executor.core.pool.size}")
-    private int corePoolSize;
+    private final int corePoolSize;
 
-    @Value("${risk.rule.executor.max.pool.size}")
-    private int maxPoolSize;
+    private final int maxPoolSize;
 
-    @Value("${risk.rule.executor.queue.capacity}")
-    private int queueCapacity;
+    private final int queueCapacity;
 
     private static final String THREAD_PREFIX = "risk-rule-";
 
-    @Bean
-    public Executor riskRuleExecutor() {
+    public RiskRuleExecutorConfig(
+            @Value("${risk.rule.executor.core.pool.size}") int corePoolSize,
+            @Value("${risk.rule.executor.max.pool.size}") int maxPoolSize,
+            @Value("${risk.rule.executor.queue.capacity}") int queueCapacity) {
         if (corePoolSize <= 0 || maxPoolSize <= 0 || queueCapacity <= 0) {
             throw new IllegalArgumentException(
                     "Invalid Executor configuration: must have positive core pool size, max pool size and queue capacity");
         }
+        this.corePoolSize = corePoolSize;
+        this.maxPoolSize = maxPoolSize;
+        this.queueCapacity = queueCapacity;
+    }
+
+    @Bean
+    public Executor riskRuleExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(corePoolSize);
         executor.setMaxPoolSize(maxPoolSize);

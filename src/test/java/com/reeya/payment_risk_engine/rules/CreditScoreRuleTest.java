@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.stream.Stream;
 
@@ -38,12 +39,12 @@ public class CreditScoreRuleTest {
     @ParameterizedTest
     @MethodSource("creditScoreCases")
     public void evaluate_shouldReturnExpectedRisk(
-            int creditScore,
+            OptionalInt creditScore,
             RiskRuleResult expectedResult
     ) {
         PaymentRiskRequest request = paymentRiskRequest();
         Mockito.when(creditScoreService.getCreditScore("CUSTOMER-001", LocalDate.parse("2026-05-30")))
-                .thenReturn(OptionalInt.of(creditScore));
+                .thenReturn(creditScore);
 
         RiskRuleResult result = creditScoreRule.evaluate(request);
 
@@ -110,57 +111,35 @@ public class CreditScoreRuleTest {
 
     private static Stream<Arguments> creditScoreCases() {
         return Stream.of(
-                Arguments.of(499, new RiskRuleResult(
-                        "CREDIT_SCORE_CHECK",
-                        50,
-                        RiskLevel.HIGH,
-                        "Credit score is high risk"
-                )),
-                Arguments.of(500, new RiskRuleResult(
-                        "CREDIT_SCORE_CHECK",
-                        20,
-                        RiskLevel.MEDIUM,
-                        "Credit score is medium risk"
-                )),
-                Arguments.of(649, new RiskRuleResult(
-                        "CREDIT_SCORE_CHECK",
-                        20,
-                        RiskLevel.MEDIUM,
-                        "Credit score is medium risk"
-                )),
-                Arguments.of(650, new RiskRuleResult(
-                        "CREDIT_SCORE_CHECK",
-                        0,
-                        RiskLevel.LOW,
-                        "Credit score is low risk"
-                ))
-        );
-    }
-
-    @ParameterizedTest
-    @MethodSource("missingCreditScoreCases")
-    public void evaluate_whenCreditScoreIsMissingShouldReturnHighRisk(
-            OptionalInt creditScore,
-            RiskRuleResult expectedResult
-    ) {
-        PaymentRiskRequest request = paymentRiskRequest();
-        Mockito.when(creditScoreService.getCreditScore("CUSTOMER-001", LocalDate.parse("2026-05-30")))
-                .thenReturn(creditScore);
-
-        RiskRuleResult result = creditScoreRule.evaluate(request);
-
-        assertEquals(expectedResult, result);
-        Mockito.verify(creditScoreService).getCreditScore("CUSTOMER-001", LocalDate.parse("2026-05-30"));
-        Mockito.verifyNoMoreInteractions(creditScoreService);
-    }
-
-    private static Stream<Arguments> missingCreditScoreCases() {
-        return Stream.of(
                 Arguments.of(OptionalInt.empty(), new RiskRuleResult(
                         "CREDIT_SCORE_CHECK",
                         50,
                         RiskLevel.HIGH,
                         "Credit score not available"
+                )),
+                Arguments.of(OptionalInt.of(499), new RiskRuleResult(
+                        "CREDIT_SCORE_CHECK",
+                        50,
+                        RiskLevel.HIGH,
+                        "Credit score is high risk"
+                )),
+                Arguments.of(OptionalInt.of(500), new RiskRuleResult(
+                        "CREDIT_SCORE_CHECK",
+                        20,
+                        RiskLevel.MEDIUM,
+                        "Credit score is medium risk"
+                )),
+                Arguments.of(OptionalInt.of(649), new RiskRuleResult(
+                        "CREDIT_SCORE_CHECK",
+                        20,
+                        RiskLevel.MEDIUM,
+                        "Credit score is medium risk"
+                )),
+                Arguments.of(OptionalInt.of(650), new RiskRuleResult(
+                        "CREDIT_SCORE_CHECK",
+                        0,
+                        RiskLevel.LOW,
+                        "Credit score is low risk"
                 ))
         );
     }

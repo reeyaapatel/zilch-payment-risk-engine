@@ -1,7 +1,6 @@
-package com.reeya.payment_risk_engine.service;
+package com.reeya.payment_risk_engine.service.risk;
 
 import com.reeya.payment_risk_engine.model.risk.Status;
-import com.reeya.payment_risk_engine.service.risk.SimpleThresholdRiskDecisionPolicy;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

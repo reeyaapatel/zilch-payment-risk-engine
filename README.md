@@ -37,7 +37,7 @@ RiskScoreCalculator
     ↓
 RiskDecisionPolicy
     ↓
-Persist Assessment
+Persist PaymentRisk
     ↓
 Response
 ```
