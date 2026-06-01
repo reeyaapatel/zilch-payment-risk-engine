@@ -5,6 +5,7 @@ import com.reeya.payment_risk_engine.model.risk.RiskLevel;
 import com.reeya.payment_risk_engine.model.risk.RiskRuleResult;
 import com.reeya.payment_risk_engine.model.api.PaymentRiskRequest;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -19,6 +20,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(MockitoExtension.class)
 public class BuyerMerchantMismatchRuleTest {
@@ -30,7 +32,7 @@ public class BuyerMerchantMismatchRuleTest {
 
     @BeforeEach
     public void setUp() {
-        rule = new BuyerMerchantMismatchRule(ipGeoLocationProvider);
+        rule = new BuyerMerchantMismatchRule(ipGeoLocationProvider,0, 50);
     }
 
     @ParameterizedTest
@@ -48,6 +50,42 @@ public class BuyerMerchantMismatchRuleTest {
         assertEquals(expectedResult, result);
         Mockito.verify(ipGeoLocationProvider).getCountryCode("1.2.3.4");
         Mockito.verifyNoMoreInteractions(ipGeoLocationProvider);
+    }
+
+    @Test
+    public void constructor_whenIpGeoLocationProviderIsNullThrowsError() {
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new BuyerMerchantMismatchRule(null, 0, 50)
+        );
+
+        assertEquals(
+                "Invalid configuration for BuyerMerchantMismatchRule: IpGeoLocationProvider must not be null",
+                exception.getMessage());
+    }
+
+    @Test
+    public void constructor_whenLowRiskValueIsNegativeThrowsError() {
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new BuyerMerchantMismatchRule(ipGeoLocationProvider, -1, 50)
+        );
+
+        assertEquals(
+                "Invalid configuration for BuyerMerchantMismatchRule: buyerMerchantLowRiskValue must be positive",
+                exception.getMessage());
+    }
+
+    @Test
+    public void constructor_whenMediumRiskValueIsNotPositiveThrowsError() {
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new BuyerMerchantMismatchRule(ipGeoLocationProvider, 0, 0)
+        );
+
+        assertEquals(
+                "Invalid configuration for BuyerMerchantMismatchRule: buyerMerchantMediumRiskValue must be greater than 0",
+                exception.getMessage());
     }
 
     private static Stream<Arguments> buyerMerchantCases() {

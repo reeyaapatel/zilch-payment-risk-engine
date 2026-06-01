@@ -12,6 +12,7 @@ import com.reeya.payment_risk_engine.service.risk.RiskScoreCalculator;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -24,37 +25,13 @@ import java.util.Optional;
  */
 @Slf4j
 @Service
+@AllArgsConstructor
 public class PaymentRiskService {
 
     private final EntityManager entityManager;
     private final RiskRuleEvaluator riskRuleEvaluator;
     private final RiskDecisionPolicy riskDecisionPolicy;
     private final RiskScoreCalculator riskScoreCalculator;
-
-    public PaymentRiskService(
-            EntityManager entityManager,
-            RiskRuleEvaluator riskRuleEvaluator,
-            RiskDecisionPolicy riskDecisionPolicy,
-            RiskScoreCalculator riskScoreCalculator
-    ) {
-        if (entityManager == null) {
-            throw new IllegalArgumentException("EntityManager must not be null");
-        }
-        if (riskRuleEvaluator == null) {
-            throw new IllegalArgumentException("RiskRuleEvaluator must not be null");
-        }
-        if (riskDecisionPolicy == null) {
-            throw new IllegalArgumentException("RiskDecisionPolicy must not be null");
-        }
-        if (riskScoreCalculator == null) {
-            throw new IllegalArgumentException("RiskScoreCalculator must not be null");
-        }
-
-        this.entityManager = entityManager;
-        this.riskRuleEvaluator = riskRuleEvaluator;
-        this.riskDecisionPolicy = riskDecisionPolicy;
-        this.riskScoreCalculator = riskScoreCalculator;
-    }
 
     @Transactional
     public PaymentRiskResponse assessRisk(PaymentRiskRequest request) {

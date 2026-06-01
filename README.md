@@ -5,9 +5,8 @@ The business logic is intentionally simplified. In a real-world platform, risk d
 
 ## Design Decisions
 
-* **Strategy Pattern** – Each risk check implements `RiskRule`, making it easy to add new rules without changing the core assessment flow.
-* **SOLID** – The design implements SOLID principles by depending on abstractions rather than concrete implementations. `RiskRule` allows new rules to be added without changing the core service flow, supporting the Open/Closed Principle. `PaymentRiskService` depends on interfaces such as `RiskRuleEvaluator`, `RiskDecisionPolicy`, and `RiskScoreCalculator`, demonstrating the Dependency Inversion Principle and keeping rule execution, scoring, and decision logic separate.
-* **Idempotency** – Payment assessments are keyed by `paymentId`, ensuring the same payment can be submitted multiple times without creating duplicate records or inconsistent outcomes. This is a common requirement in payment systems where retries may occur due to network failures or client timeouts.
+* **SOLID/Strategy Pattern** – The design implements SOLID principles by depending on abstractions rather than concrete implementations. `RiskRule` allows new rules to be added without changing the core service flow, supporting the Open/Closed Principle. `PaymentRiskService` depends on interfaces such as `RiskRuleEvaluator`, `RiskDecisionPolicy`, and `RiskScoreCalculator`, demonstrating the Dependency Inversion Principle and keeping rule execution, scoring, and decision logic separate.
+* **Idempotency** – Payment risk decisions are keyed by `paymentId`, ensuring the same payment can be submitted multiple times without creating duplicate records or inconsistent outcomes. This is a common requirement in payment systems where retries may occur due to network failures or client timeouts.
 * **Parallel Execution** – Risk rules are executed using `CompletableFuture` and a dedicated thread pool to simulate independent verification checks running concurrently.
 * **Failure Handling** – Rule failures and timeouts generate a high-risk fallback result, ensuring uncertain payments are reviewed rather than automatically declined or not being processed due to individual rule errors.
 * **Persistence** – H2 and Flyway are used to demonstrate persistence and schema versioning. A production system would likely use PostgreSQL.
